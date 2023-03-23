@@ -12,6 +12,16 @@ Tensor nms_rotated_cuda(const Tensor dets, const Tensor scores,
                         const float iou_threshold, const int multi_label);
 #endif
 
+#ifdef MMCV_WITH_NPU
+Tensor nms_rotated_npu(const Tensor dets, const Tensor scores,
+                       const Tensor labels, const float iou_threshold);
+#endif
+
+#ifdef MMCV_WITH_MLU
+Tensor nms_rotated_mlu(const Tensor dets, const Tensor scores,
+                       const float iou_threshold);
+#endif
+
 // Interface for Python
 // inline is needed to prevent multiple function definitions when this header is
 // included by different cpps
@@ -25,6 +35,16 @@ Tensor nms_rotated(const Tensor dets, const Tensor scores, const Tensor order,
                             iou_threshold, multi_label);
 #else
     AT_ERROR("Not compiled with GPU support");
+#endif
+  } else if (dets.device().type() == at::kXLA) {
+#ifdef MMCV_WITH_NPU
+    return nms_rotated_npu(dets, scores, labels, iou_threshold);
+#else
+    AT_ERROR("Not compiled with NPU support");
+#endif
+#ifdef MMCV_WITH_MLU
+  } else if (dets.device().type() == at::kMLU) {
+    return nms_rotated_mlu(dets, scores, iou_threshold);
 #endif
   }
 
