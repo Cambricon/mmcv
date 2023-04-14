@@ -1,0 +1,11 @@
+version: "1"
+rules:
+  - base: 1.x
+    upstream: open-mmlab:1.x
+    mergeMethod: hardreset
+  - base: 2.x
+    upstream: open-mmlab:2.x
+    mergeMethod: hardreset
+  - base: master
+    upstream: open-mmlab:master
+    mergeMethod: hardreset    
