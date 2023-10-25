@@ -6,10 +6,10 @@ We implement common ops used in detection, segmentation, etc.
 | ---------------------------- | --- | ---- | --- | --- | ------ |
 | ActiveRotatedFilter          | √   | √    |     |     |        |
 | AssignScoreWithK             |     | √    |     |     |        |
-| BallQuery                    |     | √    |     |     |        |
+| BallQuery                    |     | √    | √   |     |        |
 | BBoxOverlaps                 |     | √    | √   | √   |        |
 | BorderAlign                  |     | √    |     |     |        |
-| BoxIouRotated                | √   | √    |     |     |        |
+| BoxIouRotated                | √   | √    | √   |     |        |
 | BoxIouQuadri                 | √   | √    |     |     |        |
 | CARAFE                       |     | √    | √   |     |        |
 | ChamferDistance              |     | √    |     |     |        |
@@ -18,10 +18,10 @@ We implement common ops used in detection, segmentation, etc.
 | ConvexIoU                    |     | √    |     |     |        |
 | CornerPool                   |     | √    |     |     |        |
 | Correlation                  |     | √    |     |     |        |
-| Deformable Convolution v1/v2 | √   | √    |     |     |        |
+| Deformable Convolution v1/v2 | √   | √    | √   |     | √      |
 | Deformable RoIPool           |     | √    | √   |     | √      |
-| DiffIoURotated               |     | √    |     |     |        |
-| DynamicScatter               |     | √    |     |     |        |
+| DiffIoURotated               |     | √    | √   |     |        |
+| DynamicScatter               |     | √    | √   |     |        |
 | FurthestPointSample          |     | √    |     |     |        |
 | FurthestPointSampleWithDist  |     | √    |     |     |        |
 | FusedBiasLeakyrelu           |     | √    |     |     | √      |
@@ -35,13 +35,13 @@ We implement common ops used in detection, segmentation, etc.
 | ModulatedDeformConv2d        | √   | √    | √   |     | √      |
 | MultiScaleDeformableAttn     |     | √    | √   |     |        |
 | NMS                          | √   | √    | √   |     | √      |
-| NMSRotated                   | √   | √    |     |     |        |
+| NMSRotated                   | √   | √    | √   |     | √      |
 | NMSQuadri                    | √   | √    |     |     |        |
 | PixelGroup                   | √   |      |     |     |        |
 | PointsInBoxes                | √   | √    |     |     |        |
 | PointsInPolygons             |     | √    |     |     |        |
-| PSAMask                      | √   | √    | √   |     |        |
-| RotatedFeatureAlign          | √   | √    |     |     |        |
+| PSAMask                      | √   | √    | √   |     | √      |
+| RotatedFeatureAlign          | √   | √    | √   |     |        |
 | RoIPointPool3d               |     | √    | √   |     |        |
 | RoIPool                      |     | √    | √   |     |        |
 | RoIAlignRotated              | √   | √    | √   |     |        |
@@ -52,11 +52,11 @@ We implement common ops used in detection, segmentation, etc.
 | SigmoidFocalLoss             |     | √    | √   |     | √      |
 | SoftmaxFocalLoss             |     | √    |     |     | √      |
 | SoftNMS                      |     | √    |     |     |        |
-| Sparse Convolution           |     | √    |     |     |        |
+| Sparse Convolution           |     | √    | √   |     |        |
 | Synchronized BatchNorm       |     | √    |     |     |        |
 | ThreeInterpolate             |     | √    |     |     |        |
 | ThreeNN                      |     | √    | √   |     |        |
 | TINShift                     |     | √    | √   |     |        |
 | UpFirDn2d                    |     | √    |     |     |        |
-| Voxelization                 | √   | √    |     |     |        |
+| Voxelization                 | √   | √    | √   |     |        |
 | PrRoIPool                    |     | √    |     |     |        |
