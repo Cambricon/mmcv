@@ -1,0 +1,74 @@
+library "cambricon-pipe-lib@master"
+
+cnpipe {
+    checkUTReport false
+    checkMRUpvotes false
+    uploadTestResult 'master', false
+    // 获取torch1.9 daily docker
+    def docker_image = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.9_develop/ubuntu18.04/3.7/latest").get("docker")
+    // 运行单元测试
+    task('run_unit_test_main', unit_test(docker_image, this.gitlabSourceBranch))
+}
+
+def unit_test(docker_image, branch_name) {
+    return {
+        stage 'test_mmcv_ops'
+        timeout 120
+        if (this.NODE_LABEL) {
+            // 线下机
+            runOnCloud false
+            node {
+                label this.NODE_LABEL
+            }
+            container {
+                image docker_image
+                runArgs '--shm-size 64G --network=host --privileged --device /dev/cambricon_dev0 --device /dev/cambricon_ctl -v /usr/bin/cnmon:/usr/bin/cnmon'
+            }
+        } else {
+            // 云平台
+            node {
+                cardType this.CARD_TYPE.split(',')
+                drvVer this.DRIVER_VERSION
+            }
+            container {
+                image docker_image
+            }
+            resReq {
+                reqMlus 1
+                lmtMlus 1
+                reqCpu 40
+                lmtCpu 40
+                reqMemory '40Gi'
+                lmtMemory '40Gi'
+                reqEphemeralStorage '96Gi'
+                lmtEphemeralStorage '96Gi'
+                modifyShm true
+            }
+        }
+        unstash 'CI_MR_PROJ'
+        script '''
+            set -e
+            set -x
+            pushd mmcv
+                source /torch/venv3/pytorch/bin/activate
+                MMCV_WITH_OPS=1 pip install -e .
+                pip install -r requirements/test.txt
+                pip install transformers==4.6.0
+                pip install attrs==19.1.0
+                pip install pytest==4.1.0
+                # pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --resultlog=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
+                pytest -s tests/test_ops --disable-warnings --resultlog=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
+            popd
+            mkdir dmesg_log
+            RESULT=$?
+            if [[${RESULT} != "0"]]; then
+                # 存储dmesg信息
+                echo "================= saved dmesg ================="
+                dmesg -T > ${CI_WORK_DIR}/dmesg_log/dmesg.log
+            fi
+        '''
+        stash 'dmesg_log','dmesg_log'
+        archiveLog 'test_log'
+        junitXml 'test_result'
+    }
+}
