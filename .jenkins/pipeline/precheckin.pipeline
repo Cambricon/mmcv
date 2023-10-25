@@ -56,8 +56,7 @@ def unit_test(docker_image, branch_name) {
                 pip install transformers==4.6.0
                 pip install attrs==19.1.0
                 pip install pytest==4.1.0
-                # pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --resultlog=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
-                pytest -s tests/test_ops --disable-warnings --resultlog=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
+                pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --resultlog=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
             popd
             mkdir dmesg_log
             RESULT=$?
