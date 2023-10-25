@@ -454,10 +454,6 @@ def nms_rotated(dets: Tensor,
     else:
         dets_cw = dets
     multi_label = labels is not None
-    if labels is None:
-        input_labels = scores.new_empty(0, dtype=torch.int)
-    else:
-        input_labels = labels
     if dets.device.type in ('npu', 'mlu'):
         order = scores.new_empty(0, dtype=torch.long)
         if dets.device.type == 'npu':
@@ -465,8 +461,7 @@ def nms_rotated(dets: Tensor,
             for i in range(dets.size()[0]):
                 dets_cw[i][4] *= coefficient  # radians to angle
         keep_inds = ext_module.nms_rotated(dets_cw, scores, order, dets_cw,
-                                           input_labels, iou_threshold,
-                                           multi_label)
+                                           iou_threshold, multi_label)
         dets = torch.cat((dets[keep_inds], scores[keep_inds].reshape(-1, 1)),
                          dim=1)
         return dets, keep_inds
