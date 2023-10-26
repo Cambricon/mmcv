@@ -62,8 +62,8 @@ def unit_test(docker_image) {
             set -x
             pushd mmcv
                 source /torch/venv3/pytorch/bin/activate
-                pip install -r requirements.txt
                 MMCV_WITH_OPS=1 pip install -e .
+                pip install -r requirements/test.txt
                 pip install transformers==4.6.0
                 pip install attrs==19.1.0
                 pip install pytest==4.1.0
