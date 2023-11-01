@@ -152,9 +152,9 @@ class TestDeformconv:
             padding=0,
             im2col_step=im2col_step)
         model.conv_offset.weight.data = torch.nn.Parameter(
-            torch.Tensor(offset_weight).reshape(8, 1, 2, 2))
+            torch.Tensor(offset_weight).reshape(8, 1, 2, 2)).type(input_dtype)
         model.conv_offset.bias.data = torch.nn.Parameter(
-            torch.Tensor(offset_bias).reshape(8))
+            torch.Tensor(offset_bias).reshape(8)).type(input_dtype)
         model.weight.data = torch.nn.Parameter(
             torch.Tensor(deform_weight).reshape(1, 1, 2, 2))
         if device == 'cuda':

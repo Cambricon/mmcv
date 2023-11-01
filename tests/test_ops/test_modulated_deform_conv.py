@@ -106,7 +106,11 @@ class TestMdconv:
             padding=1,
             deform_groups=1,
             bias=False).to(device)
-        dcn.weight.data.fill_(1.)
+        dcn.weight.data.fill_(1.).type(input_dtype)
+        dcn.conv_offset.weight.data = torch.nn.Parameter(
+            torch.zeros(12,1,2,2)).type(input_dtype).to(device)
+        dcn.conv_offset.bias.data = torch.nn.Parameter(
+            torch.zeros(12)).type(input_dtype).to(device)
         output = dcn(input)
         output.sum().backward()
         assert numpy.allclose(output.cpu().detach().numpy(), output_t, 1e-2)
