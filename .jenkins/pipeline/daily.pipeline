@@ -20,8 +20,8 @@ cnpipe {
         docker_image = this.DOCKER_IMAGE
     }
     // 运行单元测试
-    task('run_unit_test_catch_1.9', unit_test(docker_image_19, this.gitlabSourceBranch))
-    task('run_unit_test_catch_1.13', unit_test(docker_image_113, this.gitlabSourceBranch))
+    task('run_unit_test_catch_1.9', unit_test(docker_image_19))
+    task('run_unit_test_catch_1.13', unit_test(docker_image_113))
 }
 
 def unit_test(docker_image) {
