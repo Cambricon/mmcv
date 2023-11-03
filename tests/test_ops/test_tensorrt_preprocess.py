@@ -6,12 +6,16 @@ import onnx
 import pytest
 import torch
 
+import mmcv
 from mmcv.ops import nms
 from mmcv.tensorrt.preprocess import preprocess_onnx
 
 if torch.__version__ == 'parrots':
     pytest.skip('not supported in parrots now', allow_module_level=True)
 
+if torch.__version__ == '1.13.1' and mmcv.__version__ == '1.7.1':
+    pytest.skip('torch 1.13 + mmcv 1.7.1 will cause onnx export error.',
+        allow_module_level=True)
 
 def remove_tmp_file(func):
 
