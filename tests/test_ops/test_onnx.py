@@ -12,6 +12,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from packaging import version
 
+import mmcv
+
 onnx_file = 'tmp.onnx'
 if torch.__version__ == 'parrots':
     pytest.skip('not supported in parrots now', allow_module_level=True)
@@ -124,8 +126,17 @@ def test_bilinear_grid_sample(align_corners):
 
     return process_grid_sample(func, input, grid)
 
-
-def test_nms():
+@pytest.mark.parametrize('device', [
+    pytest.param(
+        'mlu',
+        marks=[
+            pytest.mark.skipif(
+                torch.__version__ == '1.13.1' and
+                mmcv.__version__ == '1.7.1',
+                reason='using torch 1.13.x + mmcv 1.7.1 cause onnx error.')
+        ]),
+])
+def test_nms(device):
     from mmcv.ops import get_onnxruntime_op_path, nms
     np_boxes = np.array([[6.0, 3.0, 8.0, 7.0], [3.0, 6.0, 9.0, 11.0],
                          [3.0, 7.0, 10.0, 12.0], [1.0, 4.0, 13.0, 7.0]],
@@ -247,13 +258,23 @@ def test_softnms():
         assert np.allclose(onnx_inds, onnx_inds, atol=1e-3)
 
 
-def test_roialign():
+@pytest.mark.parametrize('device', [
+    pytest.param(
+        'mlu',
+        marks=[
+            pytest.mark.skipif(
+                torch.__version__ == '1.13.1' and
+                mmcv.__version__ == '1.7.1',
+                reason='using torch 1.13.x + mmcv 1.7.1 cause onnx error.')
+        ]),
+])
+def test_roialign(device):
+    rt = pytest.importorskip('onnxruntime')
     try:
-        from mmcv.ops import get_onnxruntime_op_path, roi_align
+        from mmcv.ops import roi_align
     except (ImportError, ModuleNotFoundError):
         pytest.skip('roi_align op is not successfully compiled')
 
-    ort_custom_op_path = get_onnxruntime_op_path()
     # roi align config
     pool_h = 2
     pool_w = 2
@@ -295,8 +316,6 @@ def test_roialign():
 
         onnx_model = onnx.load(onnx_file)
         session_options = rt.SessionOptions()
-        if os.path.exists(ort_custom_op_path):
-            session_options.register_custom_ops_library(ort_custom_op_path)
 
         # compute onnx_output
         input_all = [node.name for node in onnx_model.graph.input]
@@ -316,6 +335,7 @@ def test_roialign():
         # allclose
 
         assert np.allclose(pytorch_output, onnx_output, atol=1e-3)
+
 
 
 def test_roialign_rotated():
