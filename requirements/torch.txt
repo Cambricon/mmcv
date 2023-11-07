@@ -1,0 +1,27 @@
+astunparse
+expecttest
+future
+hypothesis
+numpy
+psutil
+pyyaml
+requests
+urllib3==1.26.6
+setuptools
+six
+types-dataclasses
+typing_extensions
+sympy
+pytest
+scipy==1.2.0; python_version <= '3.7'
+scipy; python_version > '3.7'
+pillow
+pandas==0.22.0; python_version < '3.7'
+pandas; python_version >= '3.7'
+numpy==1.17.0; python_version < '3.7'
+numpy; python_version >= '3.7'
+regex
+typing
+cpplint
+pylint
+librosa

@@ -66,12 +66,6 @@ def unit_test(docker_image) {
             pushd mmcv
                 source /torch/venv3/pytorch/bin/activate
                 pip install -r requirements.txt
-                catch_version=$(pip show torch-mlu 2>/dev/null)
-                package_version=$(echo "$catch_version" | grep -oP '(?<=Version: ).*')
-                if [[ "$package_version" == *torch1.9 ]];
-                then
-                    pip install transformers==4.6.0
-                fi
                 MMCV_WITH_OPS=1 python setup.py install
                 pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --log-file=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
             popd
