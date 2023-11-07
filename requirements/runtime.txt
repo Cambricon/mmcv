@@ -5,3 +5,4 @@ Pillow
 pyyaml
 regex;sys_platform=='win32'
 yapf
+transformers==4.6.0; python_version < '3.10'
