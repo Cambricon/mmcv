@@ -73,7 +73,9 @@ docs/en/_build/
 docs/en/api/generated/
 docs/zh_cn/_build/
 docs/zh_cn/api/generated/
-
+_build/
+.idea/
+stderr.log
 # PyBuilder
 target/
 
