@@ -69,7 +69,10 @@ instance/
 # Sphinx documentation
 docs/en/_build/
 docs/zh_cn/_build/
-
+docs/zh_cn/api/generated/
+_build/
+.idea/
+stderr.log
 # PyBuilder
 target/
 
