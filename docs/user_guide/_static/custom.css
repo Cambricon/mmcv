@@ -1,0 +1,63 @@
+@import url("theme.css");
+ 
+.wy-nav-content {
+    max-width: 100%;
+}
+pre.literal-block{
+    background-color: #eeffcc;
+}
+.highlight .k{
+    color: #404040;
+    font-weight: 400;
+}
+a.reference.internal:after{
+    content: " ";
+    white-space: pre;
+}
+div.wy-menu.wy-menu-vertical{
+    height:100%;
+    overflow-y:auto;
+}
+.dldpdf-btn{
+    position:fixed;
+    top:20px;
+    right:100px;
+    background-color:#ff6c37;
+    color:#ffffff;
+    font-size:18px;
+    font-weight:bold;
+    padding:16px 30px;
+    border-radius:50%;
+    cursor:pointer;
+    box-shadow: 0px 4px 10px 0px rgba(0,0,0,0.5);
+ }
+ .feedback-btn{
+    position:fixed;
+    right:5px;
+    background-color:#1E90FF;
+    color:#ffffff;
+    width: 25px;
+    border: 2px solid #FFEFD5;
+    height: 90px;
+    line-height: 20px;
+    word-wrap: break-word;
+    text-align: center;
+    cursor:pointer;
+    font-weight:bold;
+    top:40%;
+    box-shadow: 0px 4px 10px 0px rgba(0,0,0,0.5);
+ }
+.showdiv{
+    display: none;
+    position:fixed;
+    background-color: #ff6c37;
+    color: #fff;
+    top: 45%;
+    right: 30px;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+ }
+ .doccenter{
+    transform: translateX(5%);
+ }
