@@ -38,15 +38,18 @@ sampling_ratio = 2
 class TestRoiAlignMLU(TestCase):
     def _sample_inputs_roi_align(self, device, dtype):
         test_cases = (
-            ((1, 1, 2, 2), (1, 5)), 
-            ((8, 4, 4, 4), (9, 5)),
-            ((18, 250, 20, 50), (9, 5)),
+            ((1, 1, 2, 2)), 
+            ((8, 4, 4, 4)),
+            ((18, 250, 20, 50)),
         )
         samples_input = []
         samples_rois = []
-        for feature_shape, bbox_shape in test_cases:
+        for feature_shape in test_cases:
             a = make_tensor(feature_shape, device=device, dtype=dtype, requires_grad=False, low=-2, high=2, seed=90)
-            b = make_tensor(bbox_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=10, seed=90)
+            b1 = make_tensor((1, 1), device=device, dtype=dtype, requires_grad=False, low=0, high=5, seed=90)
+            b2 = make_tensor((1, 1), device=device, dtype=dtype, requires_grad=False, low=5, high=10, seed=90)
+            b_combine = torch.cat((torch.zeros(1, 1), torch.cat((b1, b1, b2, b2), 0).reshape(1, 4)), 1)
+            b = torch.tile(b_combine, (9, 1))
             samples_input.append(a)
             samples_rois.append(b)
         return samples_input, samples_rois
@@ -69,7 +72,6 @@ class TestRoiAlignMLU(TestCase):
         for dtype in dtype_list:
             inputs, roises= self._sample_inputs_roi_align(device='cpu', dtype=dtype)
             for input, rois in zip(inputs, roises):
-                rois[:, 3:] += rois[:, 1:3]
                 input_mlu = input.to(device)
                 rois_mlu = rois.to(device)
 
