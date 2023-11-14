@@ -19,8 +19,8 @@ class TestBBoxMLU(TestCase):
         samples_box1 = []
         samples_box2 = []
         for box1_shape, box2_shape in test_cases:
-            a = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=100, seed=23)
-            b = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=2, high=100, seed=23)
+            a = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=40, seed=23)
+            b = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=20, seed=23)
             samples_box1.append(a)
             samples_box2.append(b)
         return samples_box1, samples_box2
