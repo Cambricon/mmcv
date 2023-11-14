@@ -12,14 +12,17 @@ from torch.testing._internal.common_utils import \
 class TestNMSRotatedMLU(TestCase):
     def _sample_inputs_nms_rotated(self, device, dtype):
         test_cases = (
-            ((4, 6), (4, )), 
-            ((34, 6), (34, )), 
+            ((4, 4), (4, )), 
+            ((34, 4), (34, )), 
         )
         samples_box = []
         samples_label = []
         for box_shape, label_shape in test_cases:
-            a = make_tensor(box_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=10, seed=23)
+            random_radian_tensor = torch.rand((box_shape[0], 1)) * np.pi * 2
+            random_tensor = make_tensor((box_shape[0], 1), device=device, dtype=dtype, requires_grad=False, low=0, high=10, seed=23)
+            a1 = make_tensor(box_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=10, seed=23)
             b = make_tensor(label_shape, device=device, dtype=torch.int, requires_grad=False, low=0, high=2, seed=23).type(torch.float)
+            a = torch.cat((a1, random_radian_tensor, random_tensor), 1)
             samples_box.append(a)
             samples_label.append(b)
         return samples_box, samples_label

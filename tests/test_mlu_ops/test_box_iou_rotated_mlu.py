@@ -12,16 +12,20 @@ class TestBoxIoURotatedMLU(TestCase):
 
     def _gen_sample_inputs(self, device, dtype):
         test_cases = (
-            ((0, 5), (0, 5)),
-            ((3, 5), (3, 5)),
-            ((10, 5), (10, 5)),
-            ((100, 5), (100, 5)),
+            ((0, 4), (0, 4)),
+            ((3, 4), (3, 4)),
+            ((10, 4), (10, 4)),
+            ((100, 4), (100, 4)),
         )
         samples_box1 = []
         samples_box2 = []
         for box1_shape, box2_shape in test_cases:
-            a = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=2, high=8)
-            b = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=2, high=8)
+            random_radian_tensor_a = torch.rand((box1_shape[0], 1)) * np.pi * 2
+            random_radian_tensor_b = torch.rand((box2_shape[0], 1)) * np.pi * 2
+            a1 = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=2, high=8)
+            b1 = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=2, high=8)
+            a = torch.cat((a1, random_radian_tensor_a), 1)
+            b = torch.cat((b1, random_radian_tensor_b), 1)
             samples_box1.append(a)
             samples_box2.append(b)
         return samples_box1, samples_box2
