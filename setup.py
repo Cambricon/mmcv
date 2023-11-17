@@ -42,6 +42,14 @@ def get_version():
         exec(compile(f.read(), version_file, 'exec'))
     return locals()['__version__']
 
+def get_mlu_version():
+    version_file = 'packaging/scripts/build.property'
+    import json
+    # Read the content of the file
+    with open(version_file, 'r') as file:
+        data = json.load(file)
+    version_value = data['version']
+    return version_value
 
 def parse_requirements(fname='requirements/runtime.txt', with_version=True):
     """Parse the package dependencies listed in a requirements file but strips
@@ -449,7 +457,7 @@ def get_extensions():
 
 setup(
     name='mmcv' if os.getenv('MMCV_WITH_OPS', '1') == '1' else 'mmcv-lite',
-    version=get_version(),
+    version=get_version() + "+" + get_mlu_version(),
     description='OpenMMLab Computer Vision Foundation',
     keywords='computer vision',
     packages=find_packages(),

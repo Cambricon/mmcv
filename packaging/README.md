@@ -7,8 +7,15 @@ There exists a `Dockerfile` file to build docker images using manylinux base ima
 |-- README.md
 |-- mlu_docker  # save dockerfiles for building mmcv wheel using mlu
 |   `-- Dockerfile
+|-- ci  # save pipeline file and relative bash scripts
+|   `-- upload_release_packages.sh
+|   `-- pkg_generation.pipeline
 `-- scripts  # scripts to help building wheel and copy to local
-    `-- build_wheel.sh
+    `-- independent_build.sh
+    `-- build.property
+    `-- run_in_docker.sh
+    `-- mmcv_remove_files.sh
+    `-- parse_json.py
 ```
 
 ## Build docker images
