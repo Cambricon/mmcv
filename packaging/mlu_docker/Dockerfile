@@ -6,6 +6,7 @@ ARG catch_version="1.16.0"
 ARG torch_version="1.9"
 ARG torch_full_version="1.9.0"
 ARG python_version="3.6"
+ARG py_version="36"
 
 RUN mkdir /torch /wheel
 
@@ -50,7 +51,6 @@ RUN PIP_CONF_DIR=${HOME}/.config/pip && mkdir -p ${PIP_CONF_DIR} && \
 # build mmcv
 ENV CPLUS_INCLUDE_PATH=/opt/py${python_version}/include/python${python_version}m:$CPLUS_INCLUDE_PATH
 ENV C_INCLUDE_PATH=/opt/py${python_version}/include/python${python_version}m:$C_INCLUDE_PATH
-ENV py_version="36"
 
 # set env for bangc compile
 ENV TORCH_BANG_ARCH_LIST="3.0;5.0"
