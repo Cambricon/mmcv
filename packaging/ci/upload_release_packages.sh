@@ -81,7 +81,7 @@ function funcSum() {
 function upload_wheels() {
   echo "uploading wheels..."
   whl_file=$(find "./wheel_${1}/" -type f -name "*.whl")
-  filename=$(basename "$WHEEL_NAME")
+  filename=$(basename "$whl_file")
   echo "file=${filename}" > version.txt
   
   funcSum $whl_file
