@@ -1,5 +1,5 @@
 
-寒武纪MMCV用户手册
+寒武纪MMCV1.7用户手册
 =======================
 
 .. toctree::
@@ -9,4 +9,5 @@
 
    ./copyright/copyright_zh
    ./preface/preface
-
+   ./installation/installation
+   ./getstart/getstart

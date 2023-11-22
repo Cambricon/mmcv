@@ -9,7 +9,7 @@ pushd release_notes
 rm -rf _build
 ./makelatexpdf.sh
 cp _build/latex/Cambricon*.pdf ../
-cp _build/mmcv_release_notes_html.zip ../
+cp _build/mmcv1.7_release_notes_html.zip ../
 popd
 
 ###User guide ###
@@ -17,7 +17,7 @@ pushd user_guide
 rm -rf _build
 ./makelatexpdf.sh
 cp _build/latex/Cambricon*.pdf ../
-cp _build/mmcv_user_guide_html.zip ../
+cp _build/mmcv1.7_user_guide_html.zip ../
 popd
 
 popd
