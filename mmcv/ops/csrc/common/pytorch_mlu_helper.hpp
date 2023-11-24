@@ -13,7 +13,9 @@
 #define PYTORCH_MLU_HELPER_HPP_
 
 #ifdef MMCV_WITH_MLU
-#ifdef MMCV_WITH_TORCH113
+#ifdef MMCV_WITH_TORCH19
+#include "aten.h"
+#else
 #include "utils/cnlog.h"
 #include "utils/assert_tensor.h"
 #include "framework/core/device.h"
@@ -61,9 +63,7 @@ namespace torch_mlu::cnnl::ops {
 using torch_mlu::cnnl_contiguous;
 using torch_mlu::get_channels_last_memory_format;
 }
-#else
-#include "aten.h"
-#endif // MMCV_WITH_TORCH113
+#endif // MMCV_WITH_TORCH19
 
 #define NFU_ALIGN_SIZE 128
 

@@ -1,7 +1,11 @@
 import torch
 import math
 import json
-from torch.testing import floating_types_and, integral_types, complex_types
+
+if '2.1' in torch.__version__:
+    from torch.testing._internal.common_dtype import floating_types_and, integral_types, complex_types
+else:
+    from torch.testing import floating_types_and, integral_types, complex_types
 
 def make_tensor(size, device: torch.device, dtype: torch.dtype, *, low=None, high=None, seed=None,
                 requires_grad: bool = False, noncontiguous: bool = False) -> torch.Tensor:

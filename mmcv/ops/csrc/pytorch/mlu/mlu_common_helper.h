@@ -13,7 +13,9 @@
 #include <ATen/ATen.h>
 #include <c10/core/ScalarType.h>
 
-#ifdef MMCV_WITH_TORCH113
+#ifdef MMCV_WITH_TORCH19
+#include "aten.h"
+#else
 #include "utils/cnlog.h"
 #include "utils/assert_tensor.h"
 #include "framework/core/device.h"
@@ -27,8 +29,6 @@ namespace torch_mlu::cnnl::ops {
 using torch_mlu::cnnl_contiguous;
 using torch_mlu::get_channels_last_memory_format;
 }
-#else
-#include "aten.h"
 #endif
 
 #include "mlu_op.h"
