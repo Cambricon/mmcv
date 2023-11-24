@@ -12,8 +12,9 @@ from torch.testing._internal.common_utils import \
 class TestNMSRotatedMLU(TestCase):
     def _sample_inputs_nms_rotated(self, device, dtype):
         test_cases = (
-            ((4, 4), (4, )), 
-            ((34, 4), (34, )), 
+            ((4, 4), (4, )),
+            ((16, 4), (16, )),
+            ((34, 4), (34, )),
         )
         samples_box = []
         samples_label = []
@@ -27,7 +28,7 @@ class TestNMSRotatedMLU(TestCase):
             samples_label.append(b)
         return samples_box, samples_label
     
-    def test_nms_rotated(self, device='mlu'):
+    def test_nms_rotated_with_label(self, device='mlu'):
         dtype_list = [torch.float]
         for dtype in dtype_list:
             boxes, labels = self._sample_inputs_nms_rotated(device='cpu', dtype=dtype)
