@@ -9,36 +9,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *************************************************************************/
-#include "pytorch_device_registry.hpp"
-#include "pytorch_mlu_helper.hpp"
-
-void KernelMaskedIm2colForward(
-    cnrtDim3_t k_dim, cnrtFunctionType_t k_type, cnrtQueue_t queue,
-    cnrtDataType_t k_dtype, const void *im_ptr, const int height,
-    const int width, const int channels, const int kernel_h, const int kernel_w,
-    const int pad_h, const int pad_w, const void *mask_h_idx_ptr,
-    const void *mask_w_idx_ptr, const int mask_cnt, void *col_ptr);
-
-void KernelMaskedCol2imForward(cnrtDim3_t k_dim, cnrtFunctionType_t k_type,
-                               cnrtQueue_t queue, cnrtDataType_t k_dtype,
-                               const void *col_ptr, const int height,
-                               const int width, const int channels,
-                               const void *mask_h_idx_ptr,
-                               const void *mask_w_idx_ptr, const int mask_cnt,
-                               void *im_ptr);
-
-// policy function
-static void policyFunc(const int mask_cnt, cnrtDim3_t *k_dim,
-                       cnrtFunctionType_t *k_type) {
-  const size_t cluster_num = torch_mlu::getDeviceAttr(cnrtAttrClusterCount);
-  const size_t core_num = torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster);
-  const size_t task_dim = CEIL_ALIGN(mask_cnt, core_num);
-  k_dim->x = core_num;
-  k_dim->y =
-      (task_dim / core_num) > cluster_num ? cluster_num : (task_dim / core_num);
-  k_dim->z = 1;
-  *k_type = CNRT_FUNC_TYPE_UNION1;
-}
+#include "mlu_common_helper.h"
 
 void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
                                           const Tensor mask_h_idx,
@@ -82,19 +53,12 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   const int width = im.size(3);
   const int mask_cnt = mask_h_idx.size(0);
 
-  // auto im_t = im.permute({0, 2, 3, 1}).contiguous();
   auto memory_format =
       torch_mlu::cnnl::ops::get_channels_last_memory_format(im.dim());
   auto im_ = torch_mlu::cnnl::ops::cnnl_contiguous(im, memory_format);
   auto col_ =
       at::zeros({mask_cnt, kernel_h * kernel_w, channels}, col.options());
-  // calculate task dimension
-  cnrtDim3_t k_dim;
-  cnrtFunctionType_t k_type;
-  policyFunc(mask_cnt, &k_dim, &k_type);
 
-  // get compute queue
-  auto queue = torch_mlu::getCurQueue();
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_);
   auto im_ptr = im_impl->cnnlMalloc();
@@ -105,15 +69,31 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   auto col_impl = torch_mlu::getMluTensorImpl(col_);
   auto col_ptr = col_impl->cnnlMalloc();
 
-  // get comput dtype of input
-  cnrtDataType_t data_type = torch_mlu::toCnrtDtype(im.dtype());
+  // set descriptors
+  MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
+  im_desc.set_with_layout(im_, MLUOP_LAYOUT_NCHW);
+  mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
+  mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
+  col_desc.set_with_layout(col_, MLUOP_LAYOUT_ARRAY);
+
+  // get handle
+  auto handle = mluOpGetCurrentHandle();
+
+  // allocate extra space for workspace
+  size_t workspace_size = 0;
+  TORCH_MLUOP_CHECK(mluOpGetMaskedIm2colForwardWorkspaceSize(
+      handle, im_desc.desc(), mask_h_idx_desc.desc(), mask_w_idx_desc.desc(),
+      kernel_h, kernel_w, col_desc.desc(), &workspace_size));
+
+  auto workspace = at::empty(workspace_size, im.options().dtype(at::kByte));
+  auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
+  auto workspace_ptr = workspace_impl->cnnlMalloc();
 
   // launch kernel
-  CNLOG(INFO) << "Launch Kernel MLUKernelMaskedIm2colForward<<<" << k_dim.x
-              << ", " << k_dim.y << ", " << k_dim.z << ">>>";
-  KernelMaskedIm2colForward(k_dim, k_type, queue, data_type, im_ptr, height,
-                            width, channels, kernel_h, kernel_w, pad_h, pad_w,
-                            mask_h_idx_ptr, mask_w_idx_ptr, mask_cnt, col_ptr);
+  TORCH_MLUOP_CHECK(mluOpMaskedIm2colForward(
+      handle, im_desc.desc(), im_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
+      mask_w_idx_desc.desc(), mask_w_idx_ptr, kernel_h, kernel_w, pad_h, pad_w,
+      workspace_ptr, workspace_size, col_desc.desc(), col_ptr));
 
   col.copy_(col_.permute({2, 1, 0})
                 .reshape({channels * kernel_h * kernel_w, mask_cnt})
@@ -161,13 +141,6 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   auto col_t = torch_mlu::cnnl::ops::cnnl_contiguous(col.transpose(0, 1));
 
   const int mask_cnt = mask_h_idx.size(0);
-  // calculate task dimension
-  cnrtDim3_t k_dim;
-  cnrtFunctionType_t k_type;
-  policyFunc(mask_cnt, &k_dim, &k_type);
-
-  // get compute queue
-  auto queue = torch_mlu::getCurQueue();
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_);
   auto im_ptr = im_impl->cnnlMalloc();
@@ -178,16 +151,31 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   auto col_t_impl = torch_mlu::getMluTensorImpl(col_t);
   auto col_t_ptr = col_t_impl->cnnlMalloc();
 
-  // get comput dtype of input
-  cnrtDataType_t data_type = torch_mlu::toCnrtDtype(col.dtype());
+  // set descriptors
+  MluOpTensorDescriptor im_desc, col_t_desc, mask_h_idx_desc, mask_w_idx_desc;
+  im_desc.set_with_layout(im_, MLUOP_LAYOUT_NCHW);
+  mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
+  mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
+  col_t_desc.set_with_layout(col_t, MLUOP_LAYOUT_ARRAY);
+
+  // get handle
+  auto handle = mluOpGetCurrentHandle();
+
+  // allocate extra space for workspace
+  size_t workspace_size = 0;
+  TORCH_MLUOP_CHECK(mluOpGetMaskedCol2imForwardWorkspaceSize(
+      handle, col_t_desc.desc(), mask_h_idx_desc.desc(), mask_w_idx_desc.desc(),
+      im_desc.desc(), &workspace_size));
+
+  auto workspace = at::empty(workspace_size, im.options().dtype(at::kByte));
+  auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
+  auto workspace_ptr = workspace_impl->cnnlMalloc();
 
   // launch kernel
-  CNLOG(INFO) << "Launch Kernel MLUKernelMaskedCol2imForward<<<" << k_dim.x
-              << ", " << k_dim.y << ", " << k_dim.z << ">>>";
-
-  KernelMaskedCol2imForward(k_dim, k_type, queue, data_type, col_t_ptr, height,
-                            width, channels, mask_h_idx_ptr, mask_w_idx_ptr,
-                            mask_cnt, im_ptr);
+  TORCH_MLUOP_CHECK(mluOpMaskedCol2imForward(
+      handle, col_t_desc.desc(), col_t_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
+      mask_w_idx_desc.desc(), mask_w_idx_ptr, workspace_size, workspace_ptr,
+      im_desc.desc(), im_ptr));
 
   im.copy_(im_);
 }
