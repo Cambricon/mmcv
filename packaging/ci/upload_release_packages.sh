@@ -87,7 +87,7 @@ function upload_wheels() {
   funcSum $whl_file
   sshpass -p ${passwd} scp -r ./wheel_${1}/* ${DEST_HOST}:${wheels_path}/${branch}/${build_version}/
   if [ $? != 0 ];then
-    echo "upload docs faild."
+    echo "upload wheel faild."
     exit -1
   fi
   sshpass -p ${passwd} scp -r version.txt ${DEST_HOST}:${wheels_path}/${branch}/${build_version}/
@@ -159,8 +159,8 @@ elif [[ ${RELEASE_TYPE} == "all" ]]; then
   done
   create_remote_sample_code_dir
   upload_src
-  create_remote_docs_dir
-  upload_docs
+  # create_remote_docs_dir
+  # upload_docs
 else
   echo "unrecognized RELEASE_TYPE: "$RELEASE_TYPE
 fi
