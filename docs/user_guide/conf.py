@@ -26,7 +26,6 @@ version_config_file = os.path.dirname(current_path) + "/../../packaging/scripts/
 with open(version_config_file) as f:
     version_configs = json.load(f, object_pairs_hook=collections.OrderedDict)
 version = version_configs['version'][1:]
-official_version = version_configs['official_version']
 
 # -- General configuration ------------------------------------------------
 
@@ -55,7 +54,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'寒武纪MMCV'+ official_version + '用户手册'
+project = u'寒武纪MMCV用户手册'
 copyright = u'2023, Cambricon'
 author = u''
 
@@ -65,7 +64,7 @@ author = u''
 #
 # The full version, including alpha/beta/rc tags.
 release = version
-curfnpre=u'Cambricon-MMCV'+ official_version + u'-User-Guide-CN-v'
+curfnpre=u'Cambricon-MMCV-User-Guide-CN-v'
 curfn=curfnpre + version + '.tex'
 pdfname=curfnpre + version + '.pdf'
 today = ""
@@ -138,7 +137,7 @@ htmlhelp_basename = 'cambricon mmcv doc'
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, curfn, u'寒武纪MMCV'+ official_version + '用户手册',
+    (master_doc, curfn, u'寒武纪MMCV用户手册',
      author, 'manual'),
 ]
 
