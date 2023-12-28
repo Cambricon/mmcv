@@ -3,21 +3,21 @@
 
 二进制wheel包安装
 ++++++++++++++++++++++++
-1. 参考寒武纪PyTorch⽤⼾⼿册准备Pytorch环境。
+1. 参考寒武纪PyTorch⽤⼾⼿册准备PyTorch环境。
 
-2. 解压release压缩包以获得Cambeicon MMCV二进制wheel安装包。
+2. 获取Cambricon MMCV二进制wheel安装包。
 
 3. 安装二进制wheel安装包。
 
    ::
 
-     pip install mmcv-2.1.0+v{xxx}-cp{xxx}-cp{xxx}-linux_x86_64.whl
+     pip install mmcv-1.7.1+v{xxx}-cp{xxx}-cp{xxx}-linux_x86_64.whl
 
 源码编译安装
 ++++++++++++++++++++++++
-1. 参考寒武纪PyTorch⽤⼾⼿册准备Pytorch环境。
+1. 参考寒武纪PyTorch⽤⼾⼿册准备PyTorch环境。
 
-2. 解压release压缩包以获得Cambricon MMCV源码。
+2. 获取Cambricon MMCV源码包并解压。
 
 3. 安装requirements目录下的编译相关的依赖包。
 
@@ -25,7 +25,7 @@
 
      pip install -r requirements/build.txt #安装第三方包
 
-4. 编译Cambricon MMCV。
+4. 编译安装Cambricon MMCV。
 
    ::
 
@@ -38,7 +38,7 @@
     :widths: 40 40
     :header-rows: 1
 
-    * - Pytorch版本
+    * - PyTorch版本
       - Python版本
     
     * - 1.9
