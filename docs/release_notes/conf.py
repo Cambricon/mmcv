@@ -24,12 +24,6 @@ import os
 import json
 import collections
 
-current_path = os.path.abspath(__file__)
-version_config_file = os.path.dirname(current_path) + "/../../packaging/scripts/build.property"
-with open(version_config_file) as f:
-    version_configs = json.load(f, object_pairs_hook=collections.OrderedDict)
-official_version = version_configs['official_version']
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -56,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'寒武纪MMCV'+ official_version + '版本说明书'
+project = u'寒武纪MMCV版本说明书'
 copyright = u'2023, Cambricon'
 author = u''
 
@@ -98,7 +92,7 @@ html_copy_source = False
 html_css_files = [
     'custom.css',
 ]
-pdfname = 'Cambricon-MMCV'+ official_version + '-Release-notes-CN.pdf'
+pdfname = 'Cambricon-MMCV-Release-notes-CN.pdf'
 html_js_files = [('custom.js',{'pdfname':pdfname}),'cndeveloper.js']
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -138,8 +132,8 @@ htmlhelp_basename = 'release notes'
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Cambricon-MMCV' + official_version + '-Release-notes-CN.tex',
-     u'寒武纪MMCV'+ official_version + '版本说明书',
+    (master_doc, 'Cambricon-MMCV-Release-notes-CN.tex',
+     u'寒武纪MMCV版本说明书',
      author, 'manual'),
 ]
 
