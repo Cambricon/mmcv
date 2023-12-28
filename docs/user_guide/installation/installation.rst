@@ -11,7 +11,7 @@
 
    ::
 
-     pip install mmcv-1.7.1+v{xxx}-cp{xxx}-cp{xxx}-linux_x86_64.whl
+     pip install mmcv-{x.x.x}+v{xxx}-cp{xxx}-cp{xxx}-linux_x86_64.whl
 
 源码编译安装
 ++++++++++++++++++++++++
@@ -30,23 +30,4 @@
    ::
 
      MMCV_WITH_OPS=1 python setup.py install
-
-软件环境依赖
-+++++++++++++++++
-
-.. list-table:: 支持的版本组合列表
-    :widths: 40 40
-    :header-rows: 1
-
-    * - PyTorch版本
-      - Python版本
-    
-    * - 1.9
-      - 3.6
-
-    * - 1.9
-      - 3.7
-
-    * - 1.13
-      - 3.10
 

@@ -197,8 +197,8 @@ function build_docs() {
     echo "Error: Build mmcv docs failed."
     exit 1
   fi
-  
-  # Move files and clean up 
+
+  # Move files and clean up
   mv ${docs_output}/docs/*.zip ${docs_output}
   mv ${docs_output}/docs/*.pdf ${docs_output}
   rm -rf ${docs_output}/docs
@@ -218,12 +218,12 @@ elif [[ ${RELEASE_TYPE} == "src" ]]; then
   pack_src_func
 elif [[ ${RELEASE_TYPE} == "doc" ]]; then
   echo "=== BUILD DOC ==="
-  build_docs
+  # build_docs
 elif [[ ${RELEASE_TYPE} == "all" ]]; then
   echo "=== BUILD ALL ==="
   build_all_wheels_func
   pack_src_func
-  build_docs
+  # build_docs
 else
   echo "unrecognized RELEASE_TYPE: "$RELEASE_TYPE
 fi

@@ -83,7 +83,7 @@ function upload_wheels() {
   whl_file=$(find "./wheel_${1}/" -type f -name "*.whl")
   filename=$(basename "$whl_file")
   echo "file=${filename}" > version.txt
-  
+
   funcSum $whl_file
   sshpass -p ${passwd} scp -r ./wheel_${1}/* ${DEST_HOST}:${wheels_path}/${branch}/${build_version}/
   if [ $? != 0 ];then
@@ -141,8 +141,8 @@ elif [[ ${RELEASE_TYPE} == "src" ]]; then
   upload_src
 elif [[ ${RELEASE_TYPE} == "doc" ]]; then
   echo "=== UPLOAD DOC ==="
-  create_remote_docs_dir
-  upload_docs
+  # create_remote_docs_dir
+  # upload_docs
 elif [[ ${RELEASE_TYPE} == "all" ]]; then
   echo "=== UPLOAD ALL ==="
   for dir in wheel_*; do
