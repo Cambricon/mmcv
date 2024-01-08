@@ -13,7 +13,7 @@ cnpipe {
     }
 
     // 获取torch1.9 daily docker
-    def docker_image_19 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.9_develop/ubuntu18.04/3.7/latest").get("docker")
+    def docker_image_19 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.9_develop/ubuntu20.04/3.7/latest").get("docker")
     // 获取torch1.13 daily docker
     def docker_image_113 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.13.1_develop/ubuntu20.04/3.10/latest").get("docker")
     if (this.DOCKER_IMAGE) {
