@@ -120,7 +120,7 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
               ".");
 
   auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
-  auto col_t = torch_mlu::cnnl::ops::cnnl_contiguous(col);
+  auto col_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(col);
 
   const int mask_cnt = mask_h_idx.size(0);
   // get ptr of tensors
@@ -130,15 +130,15 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
   auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx);
   auto mask_w_idx_ptr = mask_w_idx_impl->cnnlMalloc();
-  auto col_t_impl = torch_mlu::getMluTensorImpl(col_t);
-  auto col_t_ptr = col_t_impl->cnnlMalloc();
+  auto col_impl = torch_mlu::getMluTensorImpl(col_contiguous);
+  auto col_ptr = col_impl->cnnlMalloc();
 
   // set descriptors
-  MluOpTensorDescriptor im_desc, col_t_desc, mask_h_idx_desc, mask_w_idx_desc;
+  MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
   im_desc.set_with_layout(im_contiguous, MLUOP_LAYOUT_NCHW);
   mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
   mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
-  col_t_desc.set_with_layout(col_t, MLUOP_LAYOUT_ARRAY);
+  col_desc.set_with_layout(col_contiguous, MLUOP_LAYOUT_ARRAY);
 
   // get handle
   auto handle = mluOpGetCurrentHandle();
@@ -146,7 +146,7 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   // allocate extra space for workspace
   size_t workspace_size = 0;
   TORCH_MLUOP_CHECK(mluOpGetMaskedCol2imForwardWorkspaceSize(
-      handle, col_t_desc.desc(), mask_h_idx_desc.desc(), mask_w_idx_desc.desc(),
+      handle, col_desc.desc(), mask_h_idx_desc.desc(), mask_w_idx_desc.desc(),
       im_desc.desc(), &workspace_size));
 
   auto workspace = at::empty(workspace_size, im.options().dtype(at::kByte));
@@ -155,7 +155,7 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
 
   // launch kernel
   TORCH_MLUOP_CHECK(mluOpMaskedCol2imForward(
-      handle, col_t_desc.desc(), col_t_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
+      handle, col_desc.desc(), col_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
       mask_w_idx_desc.desc(), mask_w_idx_ptr, workspace_size, workspace_ptr,
       im_desc.desc(), im_ptr));
 }
