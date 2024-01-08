@@ -48,12 +48,10 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
               "col.numel() should be less than 2147483648, got ", col.numel(),
               ".");
 
-  auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(im.dim());
-  auto im_ = torch_mlu::cnnl::ops::cnnl_contiguous(im, memory_format);
+  auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
   
   // get ptr of tensors
-  auto im_impl = torch_mlu::getMluTensorImpl(im_);
+  auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
   auto im_ptr = im_impl->cnnlMalloc();
   auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx);
   auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
@@ -64,7 +62,7 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
 
   // set descriptors
   MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
-  im_desc.set_with_layout(im_, MLUOP_LAYOUT_NCHW);
+  im_desc.set_with_layout(im_contiguous, MLUOP_LAYOUT_NCHW);
   mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
   mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
   col_desc.set_with_layout(col, MLUOP_LAYOUT_ARRAY);
@@ -87,7 +85,6 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
       handle, im_desc.desc(), im_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
       mask_w_idx_desc.desc(), mask_w_idx_ptr, kernel_h, kernel_w, pad_h, pad_w,
       workspace_ptr, workspace_size, col_desc.desc(), col_ptr));
-
 }
 
 void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
@@ -122,17 +119,12 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
               "col.numel() should be less than 2147483648, got ", col.numel(),
               ".");
 
-  auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(im.dim());
-  at::Tensor im_ =
-      at::empty({1, channels, height, width}, im.options(), memory_format)
-          .zero_();
-
-  auto col_t = torch_mlu::cnnl::ops::cnnl_contiguous(col.transpose(0, 1));
+  auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
+  auto col_t = torch_mlu::cnnl::ops::cnnl_contiguous(col);
 
   const int mask_cnt = mask_h_idx.size(0);
   // get ptr of tensors
-  auto im_impl = torch_mlu::getMluTensorImpl(im_);
+  auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
   auto im_ptr = im_impl->cnnlMalloc();
   auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx);
   auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
@@ -143,7 +135,7 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
 
   // set descriptors
   MluOpTensorDescriptor im_desc, col_t_desc, mask_h_idx_desc, mask_w_idx_desc;
-  im_desc.set_with_layout(im_, MLUOP_LAYOUT_NCHW);
+  im_desc.set_with_layout(im_contiguous, MLUOP_LAYOUT_NCHW);
   mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
   mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
   col_t_desc.set_with_layout(col_t, MLUOP_LAYOUT_ARRAY);
@@ -166,8 +158,6 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
       handle, col_t_desc.desc(), col_t_ptr, mask_h_idx_desc.desc(), mask_h_idx_ptr,
       mask_w_idx_desc.desc(), mask_w_idx_ptr, workspace_size, workspace_ptr,
       im_desc.desc(), im_ptr));
-
-  im.copy_(im_);
 }
 
 void masked_im2col_forward_mlu(const Tensor im, const Tensor mask_h_idx,
