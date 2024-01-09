@@ -377,7 +377,6 @@ def get_extensions():
             op_files = glob.glob('./mmcv/ops/csrc/pytorch/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/cpu/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/mlu/*.cpp') + \
-                glob.glob('./mmcv/ops/csrc/common/mlu/*.mlu') + \
                 glob.glob(
                     './mlu-ops/bangc-ops/core/**/*.cpp', recursive=True) + \
                 glob.glob(
@@ -390,7 +389,6 @@ def get_extensions():
             ]
             extension = MLUExtension
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
-            include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common/mlu'))
             include_dirs.append(os.path.abspath('./mlu-ops/bangc-ops'))
         elif (hasattr(torch.backends, 'mps')
               and torch.backends.mps.is_available()) or os.getenv(
