@@ -75,8 +75,8 @@ class MaskedConv2dFunction(Function):
         mask_inds = torch.nonzero(mask[0] > 0, as_tuple=False)
         output = features.new_zeros(batch_size, out_channel, out_h, out_w)
         if mask_inds.numel() > 0:
-            mask_h_idx = mask_inds[:, 0].contiguous().to(torch.int32)
-            mask_w_idx = mask_inds[:, 1].contiguous().to(torch.int32)
+            mask_h_idx = mask_inds[:, 0].contiguous()
+            mask_w_idx = mask_inds[:, 1].contiguous()
             data_col = features.new_zeros(in_channel * kernel_h * kernel_w,
                                           mask_inds.size(0))
             ext_module.masked_im2col_forward(

@@ -33,6 +33,21 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   TORCH_CHECK(kernel_w > 0, "kernel_w should greater than 0, got ", kernel_w,
               ".");
 
+  // mlu-ops requires mask_w_idx/mask_h_idx to be int32
+  auto mask_w_idx_cast = at::empty_like(mask_w_idx);
+  if (mask_w_idx.scalar_type() == at::kLong) {
+      mask_w_idx_cast = mask_w_idx.to(at::kInt);
+  } else {
+      mask_w_idx_cast = mask_w_idx;
+  }
+
+  auto mask_h_idx_cast = at::empty_like(mask_h_idx);
+  if (mask_h_idx.scalar_type() == at::kLong) {
+      mask_h_idx_cast = mask_h_idx.to(at::kInt);
+  } else {
+      mask_h_idx_cast = mask_h_idx;
+  }
+
   // zero element check
   TORCH_CHECK(im.numel() > 0, "im.numel should greater than zero, got ",
               im.numel(), ".");
@@ -53,9 +68,9 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
   auto im_ptr = im_impl->cnnlMalloc();
-  auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx);
+  auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx_cast);
   auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
-  auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx);
+  auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx_cast);
   auto mask_w_idx_ptr = mask_w_idx_impl->cnnlMalloc();
   auto col_impl = torch_mlu::getMluTensorImpl(col);
   auto col_ptr = col_impl->cnnlMalloc();
@@ -63,8 +78,8 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   // set descriptors
   MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
   im_desc.set_with_layout(im_contiguous, MLUOP_LAYOUT_NCHW);
-  mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
-  mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
+  mask_h_idx_desc.set_with_layout(mask_h_idx_cast, MLUOP_LAYOUT_ARRAY);
+  mask_w_idx_desc.set_with_layout(mask_w_idx_cast, MLUOP_LAYOUT_ARRAY);
   col_desc.set_with_layout(col, MLUOP_LAYOUT_ARRAY);
 
   // get handle
@@ -109,6 +124,21 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
               im.numel(), ".");
   TORCH_CHECK(col.size(0) > 0, "col.size(0) should greater than zero, got ",
               col.size(0), ".");
+  
+  // mlu-ops requires mask_w_idx/mask_h_idx to be int32
+  auto mask_w_idx_cast = at::empty_like(mask_w_idx);
+  if (mask_w_idx.scalar_type() == at::kLong) {
+      mask_w_idx_cast = mask_w_idx.to(at::kInt);
+  } else {
+      mask_w_idx_cast = mask_w_idx;
+  }
+
+  auto mask_h_idx_cast = at::empty_like(mask_h_idx);
+  if (mask_h_idx.scalar_type() == at::kLong) {
+      mask_h_idx_cast = mask_h_idx.to(at::kInt);
+  } else {
+      mask_h_idx_cast = mask_h_idx;
+  }
 
   // large tensor check
   const size_t max_input_num = 2147483648;  // 2^31, 2G num
@@ -122,13 +152,12 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
   auto col_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(col);
 
-  const int mask_cnt = mask_h_idx.size(0);
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
   auto im_ptr = im_impl->cnnlMalloc();
-  auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx);
+  auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx_cast);
   auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
-  auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx);
+  auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx_cast);
   auto mask_w_idx_ptr = mask_w_idx_impl->cnnlMalloc();
   auto col_impl = torch_mlu::getMluTensorImpl(col_contiguous);
   auto col_ptr = col_impl->cnnlMalloc();
@@ -136,8 +165,8 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
   // set descriptors
   MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
   im_desc.set_with_layout(im_contiguous, MLUOP_LAYOUT_NCHW);
-  mask_h_idx_desc.set_with_layout(mask_h_idx, MLUOP_LAYOUT_ARRAY);
-  mask_w_idx_desc.set_with_layout(mask_w_idx, MLUOP_LAYOUT_ARRAY);
+  mask_h_idx_desc.set_with_layout(mask_h_idx_cast, MLUOP_LAYOUT_ARRAY);
+  mask_w_idx_desc.set_with_layout(mask_w_idx_cast, MLUOP_LAYOUT_ARRAY);
   col_desc.set_with_layout(col_contiguous, MLUOP_LAYOUT_ARRAY);
 
   // get handle
