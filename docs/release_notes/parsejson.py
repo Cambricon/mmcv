@@ -5,6 +5,45 @@
 修改该文件，print打印信息中不能包含中文，否则在不支持中文的操作系统中会出现如下的错误，
 导致编译失败或者达不到预期的显示效果。
 'ascii' codec can't encode characters in position
+
+2023年12月04日 修改历史
+------------------------------------
+
+主要修改以下bug：
+1. 当表格通过class属性设置为longtable，但是表头用“-”分割而不是用“=”分割的时候，在sphinx5.3.0以下版本编译失败的问题。
+   如果没有替换最新的parsejson.py文件，该bug在sphinx 5.3.0以下版本，可以采用以下方式规避：
+   当表格设置为longtable时，表头改用“=”分割，而不是“-”分割，可以规避该问题。
+   如果替换了最新的parsejson.py文件，则不存在该问题，无需刻意规避。
+2. 修复了当表头为两行，并且合并列单元格放在表格的最前几列的时候，表头中的横线制表符没有画的bug。
+
+优化了以下实现方式：
+1. 将sphinx 5.3.0之后版本，为了适配表格改动所做的修改，固定在该文件的ModifyReplacePackage函数中。
+   这样只需替换该文件，而无需再修改conf.json文件，即可兼容sphinx5.3.0之前及之后版本，做到全版本兼容。
+2. 当有合并单元格的表头时，如果用“widths”参数设置的列宽，则表头中的标题不会自动换行，必须手动换行。
+   如果用“tabularcolumns”指令设置的列宽，则默认会自动换行。之前的行为是默认都会自动换行。
+   因此当前的实现要想使表头能够自动换行，必须采用tabularcolumns指令设置每一列的列宽。如果用“widths”设置列宽，只能手动换行。
+   修改原因：
+   因为如果要实现自动换行，每一列的列宽必须以“m{0.1\textwidth}”这种方式实现，之前是把“widths”设置的列宽进行了转换。
+   这种转换对于列比较少的表格没什么问题。但是当表格比较大，列比较多时，这种转换就导致表格的显示超出了页面可显示的宽度，
+   而且也会导致如何修改“widths”的值，都没什么效果。因此修改了自动换行的规则。
+   结论：
+   对于列比较多而且表头有合并单元格的表格，建议用“tabularcolumns”设置每一列的列宽，因为该指令相当于latex的原始指令，设置的列宽直接反应每一列的实际宽度。
+   对于表头没有合并单元格的表格，建议用“widths”设置列宽比较简单，让sphinx转化实际的列宽，同时对latex和html都生效。
+
+2023年11月15日 修改历史
+----------------------------
+将路径字符串相加的赋值方式，修改为os.path.join的方式，解决编译文档提示如下告警的问题：
+RemovedInSphinx80Warning: Sphinx 8 will drop support for representing paths as strings. Use "pathlib.Path" or "os.fspath" instead.
+sphinx 8之后将不再支持字符串表示路径。
+使用os.path.join的方式一定要特别注意以下几点：
+1.join函数会自动添加“/”符号，因此一定不要再添加多余的“/”，否则可能得到的路径是错误的。
+2.join可以链接超过两个的路径，但是最后一个要链接的路径一定不能加“/”符号，否则前面的路径都失效。举例如下：
+  path1 = "home"
+  path2 = "rst"
+  path3 = "/meerkat"
+  path = os.path.join(path1,path2,path3)
+  则得到的path为“/meerkat”，因此最后一个被链接的路径一定不能加“/”。
+
 '''
 
 from __future__ import print_function
@@ -355,6 +394,61 @@ class clsModifyTex:
         #删除字符串列表。有时候sphinx生成的文本内容里会带有特殊的latex指令，该指令不支持设置字体颜色，需要删除。删除不影响内容显示。
         self.delstrlst=[r'\begin{quote}',r'\end{quote}']
 
+    def __checktpacknameandparam(self,packlist,packname,*packarg):
+        '''
+        检查指定的包是否需要增加或者修改参数
+        :param packlist: 已经读出的包含的package
+        :param packname: 要修改或者添加的包
+        :param packarg: 要修改或者添加的包参数，可变参数。不会覆盖已有参数
+        '''
+        if len(packarg) == 0:
+            #如果没有参数则直接添加该包
+            loadpackagestr = "\\\\usepackage{" + packname + "}"
+            if loadpackagestr not in packlist:
+                packlist.append(loadpackagestr)
+            return
+        
+        params = ",".join(packarg)
+        loadpackagestr = "\\\\usepackage[" + params + "]{" + packname + "}"
+        #print(loadpackagestr)
+        packstr = ",".join(packlist)
+        #print(packstr)
+        searchstr = r'\\\\usepackage(\[[\S, ][^\\]+\])?\{'+packname+'\}'
+        match = re.search(searchstr,packstr)
+        if match is None:
+            #如果根本没有加载packname包，则加载该包
+            packlist.append(loadpackagestr)
+            return
+        latexpack = match.group()
+        #print(latexpack)
+        if match.group(1) is None:
+            #如果该包没有携带参数，则重新加载该包
+            #得到老包的位置，尽量原位置插入，避免因为位置问题导致编译失败
+            index = packlist.index(latexpack)
+            del packlist[index]
+            #再重新加载新的包
+            packlist.insert(index,loadpackagestr)
+            return
+        #如果携带了参数，则更新该参数
+        #为了兼容后续新添加参数，并防止覆盖已有参数，将每个参数进行比较添加
+        paramstr = match.group(1)
+        searchstr = '\[([\S, ]+)?\]'
+        match = re.search(searchstr,paramstr)
+        if match.group(1).strip() == params:
+            #print('-------------enter-----------')
+            #为了提高运行效率，两个参数相等直接返回，不再走下面的循环
+            return
+        params = match.group(1)
+        for param in packarg:
+            if param not in params:
+                params += "," + param
+        #print(params)
+        loadpackagestr = "\\\\usepackage[" + params+"]{" + packname +"}"
+        #先删除旧包，原位置插入，避免因位置错误导致的编译失败。
+        index = packlist.index(latexpack)
+        del packlist[index]
+        packlist.insert(index,loadpackagestr)
+        
     #加入其它包
     def AddPackageToTex(self):
         #得到需要包的数组
@@ -362,6 +456,9 @@ class clsModifyTex:
         if len(packarr)==0:
             return  False
 
+        self.__checktpacknameandparam(packarr,"multirow")
+        self.__checktpacknameandparam(packarr,"tcolorbox","most","skins","breakable")
+        
         #如果数组有内容，就需要将包添加到latex文件的导言区
         #搜索\usepackage{sphinx}，将包加在它的前面，用正则表达式搜索它的位置
         #采用正则表达式替换的方式，替换搜索到的字符串，因此需要先构建字符串
@@ -495,6 +592,19 @@ class clsModifyTex:
         if len(redict) ==0:
            return
 
+        #为了兼容sphinx5.3.0版本，固定添加以下配置
+        keys = redict.keys()
+        if "\\\\sphinxtoprule" not in keys:
+            redict["\\\\sphinxtoprule"] = "\\\\hline"
+        if "\\\\sphinxmidrule" not in keys:
+            redict["\\\\sphinxmidrule"] = "\\\\hline"
+        if "\\\\sphinxbottomrule" not in keys:
+            redict["\\\\sphinxbottomrule"] = "\\\\hline"
+        if "\\\\sphinxhline" not in keys:
+            redict["\\\\sphinxhline"] = "\\\\hline"
+        if "\\\\sphinxhyphen" not in keys:
+            redict["\\\\sphinxhyphen"] = "{sphinx:5.3.0}\\\\PYGZhy"
+            
         #返回字典中所有键值的列表
         keylst = list(redict)
         for key in keylst:
@@ -1349,6 +1459,10 @@ class clsModifyTex:
         :param content: 
         :return: 
         '''
+        # 默认ismultirowautowrap为自动换行
+        # 如果表格用tabluarcolumns指令设置的列宽，因为每列的宽度有具体的值，则默认自动换行
+        # 如果表格用widths指令设置的列宽，因为每列的宽度不具体，则默认不自动换行，需要手动换行
+        self.tablesattrobj.ismultirowautowrap = True  #默认ismultirowautowrap为自动换行
         newcontent = content
         columnwidthlst=[] #保存每一列宽度的列表
         #根据表格内容，得到每一列宽度参数，方便multirow的时候自动换行
@@ -1357,13 +1471,16 @@ class clsModifyTex:
         pattern = re.compile(searchstr,re.I | re.U)
         match = pattern.finditer(content)
         if match is None:
-            columnwidthlst,newcontent = self.__GetColumnParaByWidths(content)
-            return columnwidthlst,newcontent
+            #columnwidthlst,newcontent = self.__GetColumnParaByWidths(content)
+            self.tablesattrobj.ismultirowautowrap = False #则默认需要手动换行
+            return [],newcontent
         
         for m in match:
             columnwidthlst.append(m.group('width'))
         if len(columnwidthlst) ==0:
-            columnwidthlst,newcontent= self.__GetColumnParaByWidths(content)
+            #columnwidthlst,newcontent= self.__GetColumnParaByWidths(content)
+            self.tablesattrobj.ismultirowautowrap = False #则默认需要手动换行
+            return [],newcontent
         return columnwidthlst,newcontent
         
     def __FindTableHeadForFamily(self,content,isLongTable):
@@ -1754,6 +1871,18 @@ class clsModifyTex:
         '''
         multirowflag = False #是否是multirow单元格
         cellstr = cellcontent[0] #取得单元格内容
+        #print('===========================')
+        #print(cellstr)
+
+        #查找有没有\cline指令，如果有这个指令，为了划线清晰在前面再多加一个。
+        searchstr= r"\\cline\{[\s\S]*?\}"
+        match = re.search(searchstr,cellstr,re.I | re.M)
+        if match is not None:
+            cline = match.group()
+            #去掉开头的换行符，否则影响后面的正则表达式,导致正则表达式查找失败
+            cellstr = cellstr.lstrip()
+            cellstr = cline + cellstr
+
         sphinxstyletheadfamily=""
         if r'\sphinxmultirow' in cellstr:
             cellcontent[0] = self.__ModifySphinxMultirow(cellstr,
@@ -1780,13 +1909,19 @@ class clsModifyTex:
                     flag = "l|"
                 
             #查找\sphinxAtStartPar位置
+            precell = ""
             pos = cellstr.find(r'\sphinxstyletheadfamily')
+            #print("cellstr = %s"  % cellstr)
+            #print("pos=%d" % pos)
+            if pos > 0:
+                #说明前面还有内容，需要把前面的内容保存下来
+                precell = cellstr[0:pos] + "\n"
             if pos != -1:
                 cellstr = cellstr[pos+len(r'\sphinxstyletheadfamily'):len(cellstr)]
                 sphinxstyletheadfamily = "\\sphinxstyletheadfamily"
 
             ismanualwraplst=[False]
-            content = self.__delNotMustStrFromContent(cellstr,ismanualwraplst)
+            self.__delNotMustStrFromContent(cellstr,ismanualwraplst)
             if ismanualwraplst[0] is True:
                 if colindex == 1:
                     flag = "|l|"
@@ -1822,8 +1957,8 @@ class clsModifyTex:
             #        'sphinxstyletheadfamily': "\\sphinxstyletheadfamily",
             #        'content': self.__delNotMustStrFromContent(contentstr)
             #    }
-            cellcontent[0] = fullcontentstr
-
+            cellcontent[0] =precell + fullcontentstr
+        #print('===========================')
         return multirowflag
     
     def __FindMergeRowCountAndContent(self,multirowstr):
@@ -1954,12 +2089,12 @@ class clsModifyTex:
         """
         # 先找出第一行
         if isLongTable:
-            searchstr = r'\\sphinxtableatstartofbodyhook(?P<content>[\s\S]*?)\\hline'
+            searchstr = r'\\endlastfoot[\s]+(\\sphinxtableatstartofbodyhook)?(?P<content>[\s\S]*?)\\hline'
         else:
             searchstr = r'\\hline(?P<content>[\s\S]*?)\\hline'
         m = re.search(searchstr, content, re.M | re.I | re.U)
-        headcontent = m.group(1)  # 匹配到的第一个即为表头内容
-        posarr = m.span(1)  # 保存起始位置和结束位置，便于组成新的内容
+        headcontent = m.group('content')  # 匹配到的第一个即为表头内容
+        posarr = m.span('content')  # 保存起始位置和结束位置，便于组成新的内容
 
         if 'multicolumn' in headcontent:
             return content
@@ -2663,23 +2798,24 @@ class clsCheckDocCopyrightYear:
         '''
         if self.copyrightfile =="":
 
-            copyrightpre = "/copyright/copyright"
-            filepath = self.app.srcdir + copyrightpre + ".rst"
+            copyrightpre = "copyright/copyright"
+            filepath = os.path.join(self.app.srcdir,copyrightpre + ".rst")
             
             if os.path.isfile(filepath):
                 return filepath
             
             if self.language=="zh_CN":
-                filepath = self.app.srcdir+ copyrightpre + "_zh.rst"
+                filepath = os.path.join(self.app.srcdir,copyrightpre + "_zh.rst")
             else:
-                filepath = self.app.srcdir+ copyrightpre +"_en.rst"
-                
+                filepath = os.path.join(self.app.srcdir,copyrightpre +"_en.rst")
+
             if os.path.isfile(filepath):
                 return filepath
             else:
                 return ""
         else:
-            filepath = self.confdir + "/" + self.copyrightfile
+            filepath = os.path.join(self.confdir , self.copyrightfile)
+
             #转为绝对路径
             filepath = os.path.abspath(filepath)
             if os.path.isfile(filepath):
@@ -2719,7 +2855,7 @@ class clsCheckDocCopyrightYear:
                           True-只修改脚注的年份；False-同时修改copyright和脚注的年份。
         '''
         #打开文件
-        conffile = self.confdir +"/conf.py"
+        conffile = os.path.join(self.confdir,"conf.py")
         fo = codecs.open(conffile, "r+", encoding='utf-8')
         textcontent = fo.read()
         fo.close()
@@ -3279,7 +3415,7 @@ def GetConfjsondict(app):
         if hasattr(app.config, "confjson_path") and len(app.config.confjson_path) > 0:
             confpath = os.path.abspath(app.confdir + "/" + app.config.confjson_path)
         else:
-            confpath = app.confdir + "/conf.json"
+            confpath = os.path.join(app.confdir ,"conf.json")
             
         if os.path.exists(confpath):
             __load_dict__ = __openconfjsonfile__(confpath)
@@ -3303,18 +3439,18 @@ def Modifylatex_main(build_dir,latexdocumentslst,app=None,language='zh_CN'):
     for i in range(0,doclen):
         #得到latex路径
         latexpath = build_dir
-        desbkpaperfile= latexpath+'/chapterbkpaper.pdf'
+        desbkpaperfile= os.path.join(latexpath,'chapterbkpaper.pdf')
         #copy 背景图到latex路径，背景图必须与该文件在同一个目录下
         if (app is not None) and hasattr(app.config,'chapterbkpaper_image') and (app.config.chapterbkpaper_image!=""):
             #转为绝对路径进行判断，兼容conf.py和parsejson.py不在同一目录的情况
-            bkpaperimage = os.path.abspath(app.confdir+"/"+ app.config.chapterbkpaper_image)
+            bkpaperimage = os.path.abspath(os.path.join(app.confdir,app.config.chapterbkpaper_image))
             if os.path.isfile (bkpaperimage):
                 shutil.copy(bkpaperimage,desbkpaperfile)
         elif os.path.exists('./chapterbkpaper.pdf'):
             shutil.copy('./chapterbkpaper.pdf', latexpath)
         else:
             #取配置文件所在目录下的chapterbkpaper.pdf,将其copy到latex文件夹
-            bkpaperimage = os.path.abspath(app.confdir + "/chapterbkpaper.pdf")
+            bkpaperimage = os.path.abspath(os.path.join(app.confdir,"chapterbkpaper.pdf"))
             if os.path.isfile(bkpaperimage):
                 shutil.copy(bkpaperimage, latexpath)
                 
@@ -3322,7 +3458,7 @@ def Modifylatex_main(build_dir,latexdocumentslst,app=None,language='zh_CN'):
         filename = latexdocumentslst[i][1]
         if  filename is None:
             continue
-        texfilepath = latexpath + '/' + filename
+        texfilepath = os.path.join(latexpath,filename)
         #相对路径转绝对路径
         texfile = os.path.abspath(texfilepath)
         if not os.path.exists(texfile):
