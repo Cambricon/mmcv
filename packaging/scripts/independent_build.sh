@@ -190,15 +190,15 @@ function build_docs() {
   mkdir -p "${docs_output}"
 
   # Run documentation build in Docker container
-  bash run_in_docker.sh ${doc_build_image} bash build.sh ${docs_output} ${MMCV_BRANCH}
+  bash run_in_docker.sh ${doc_build_image} bash build.sh ${docs_output} docs
 
   # Check for build success
   if [ $? -ne 0 ]; then
     echo "Error: Build mmcv docs failed."
     exit 1
   fi
-  
-  # Move files and clean up 
+
+  # Move files and clean up
   mv ${docs_output}/docs/*.zip ${docs_output}
   mv ${docs_output}/docs/*.pdf ${docs_output}
   rm -rf ${docs_output}/docs
