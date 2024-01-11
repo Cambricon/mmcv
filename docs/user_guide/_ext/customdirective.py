@@ -1,9 +1,25 @@
 #!/usr/bin/python
 # -*- coding: UTF-8
 
+"""
+2023年12月05日 修改历史
+================================
+
+修改内容如下：
+1. 增加cnparsed-literal指令，和parse-literal指令相对应，
+  但是cnparsed-literal指令可以修改字体颜色，背景颜色，字体大小等参数，对于pdf还可以修改行间距等，功能比较多。
+
+特别注意：
+* 如果安装的xelatex不包含ulem包，则cnparsed-literal和cncolor指令要使用underline和strike参数，必须将ulem.sty放到和该文件同一目录下，否则会导致编译错误。
+* 两个指令参数的详细说明参见cnColorDirectivecls和cnparsedliteralDirectivecls两个类的说明。
+* cnparsed-literal和cncolor指令的underline和strike参数同时使用不支持自动换行。
+"""
+
 import os
-import sys
-import warnings
+import shutil
+#import sys
+#import warnings
+import time
 import re
 from sphinx.directives.other import TocTree
 from docutils.parsers.rst import Directive
@@ -26,6 +42,8 @@ class CNOnly(Directive):
     1. 可以用在一个列表内，被指令包含的item与前后item之间无空行。only指令默认就是两个段落，因此指令内容和前后item之间有空行，效果比较难看。
     2. 用在一个段落内，按tag条件输出。only指令只能用于两个段落，不支持在同一段落内使用。
     3. 可用于一个表格内，按tag条件输出。only指令不支持用于表格内。
+    使用cnonly注意事项：
+    1. cnonly为了在同一段落中使用，默认会删除指令前的一行空行，因此如果是两个段落，cnonly指令前至少保留两个空行。
     '''
 
     has_content=True
@@ -33,7 +51,7 @@ class CNOnly(Directive):
     '''
     notailspace
     ---------------
-    cnonly指令参数，是否在指令内容后添加空行，无需符值。
+    cnonly指令参数，是否在指令内容后添加空行，无需赋值。
     添加了该参数，则在指令内容和下一段之间不添加空行，则指令内容和下一段内容属于同一段落。
     不添加该参数，则指令内容和下一段之间添加空行，指令内容和下一段内容为独立的两个段落。
     cnonly指令默认不添加该参数。
@@ -152,7 +170,7 @@ class CNOnlyPro():
             if notailspace:
                 return presource+onlycontentstr+leftsource
             else:
-               return presource+ onlycontentstr +'\n' + leftsource
+                return presource+ onlycontentstr +'\n' + leftsource
         else:
             return sourcestr
         
@@ -844,11 +862,20 @@ class cnColorDirectivecls(SphinxDirective):
     * bgcolor：背景颜色，字符串。支持red,green,blue,black,white,yellow和RGB(,,)格式的颜色设置。
     * italic：斜体的标识，添加该参数则将字体设置为斜体，不添加该参数斜体无效。
     * bold：粗体的标识，添加该参数则将字体设置为粗体，不添加该参数粗体无效。
-    * underline：添加下划线，添加该参数则为字体设置下划线，不添加该参数不添加下划线。latex暂不支持。
-    * strike：添加删除线，添加该参数则为字体设置删除线，不添加该参数不添加删除线。latex暂不支持。
+    * underline：添加下划线，添加该参数则为字体设置下划线，不添加该参数不添加下划线。latex必须要求包含ulem包才能生效，否则不生效。
+    * strike：添加删除线，添加该参数则为字体设置删除线，不添加该参数不添加删除线。latex必须要求包含ulem包才能生效，否则不生效。
+             而且添加了删除线后不支持自动换行，需要手动换行。
     * istitle: chapter 或者 section。当添加了istitle后，如果内容包含标题，则认为是一级大纲chapter，否则认为是section。
     * fontsize: 字体大小，以px或者pt为单位。html直接使用已设置的值，latex会转为latex字体大小进行设置。
                 latex最大字体\Huge为34px，因此当字体大小设置为34px以上时，对latex文件来说字体大小都是\Huge。
+    
+    注意：
+    underline和strike同时使用不支持自动换行。单独使用underline和strike可以自动换行。
+    要使用underline和strike参数，ulem.sty包必须和该文件放到同一目录下。为了兼容有的xelatex不包含ulem包所做的操作。
+    只有ulem.sty存在，underline和strike两个参数才能生效，否则会导致编译失败。
+    详细操作流程可以查看config_inited_handler和cd_build_finished_handler两个事件处理函数。
+    如果xelatex本身就包含ulem包，请参考config_inited_handler和cd_build_finished_handler的处理流程，
+    去掉对ulem.sty是否存在的判断，自行修改代码。
     '''
     required_arguments = 0
     optional_arguments = 1
@@ -938,7 +965,7 @@ class cnColorDirectivecls(SphinxDirective):
         #print('ccccccccccccccccccccccc')
         text = '\n'.join(contentlst) + '\n'  # 末尾加一个换行符，否则如果正则表达式查不出来最后的符号行。
         #print(text)
-        searchstr = r'([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e])\1+(?=[\r|\n|\r\n])\n?'
+        searchstr = r'([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e])\1+(?=[\r|\n|\r\n])\n'
         matchobj = re.search(searchstr,text)
         if matchobj:
             #生成新的属性，主要用于纯文本
@@ -989,7 +1016,7 @@ class cnColorDirectivecls(SphinxDirective):
         # print('ccccccccccccccccccccccc')
         text = '\n'.join(contentlst) + '\n'  # 末尾加一个换行符，否则如果正则表达式查不出来最后的符号行。
         # print(text)
-        searchstr = r'([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e])\1+(?=[\r|\n|\r\n])\n?'
+        searchstr = r'([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e])\1+(?=[\r|\n|\r\n])\n'
         matchobj = re.search(searchstr, text)
         if matchobj:
             # 生成新的属性，主要用于纯文本
@@ -1029,9 +1056,9 @@ class cnColorDirectivecls(SphinxDirective):
             return parentnode
 
         else:
-            # print('~~~~~~~~~~~~~~~~~~~~~~')
-            # print(text)
-            # print('~~~~~~~~~~~~~~~~~~~~~~')
+            #print('~~~~~~~~~~~~~~~~~~~~~~')
+            #print(contentlst)
+            #print('~~~~~~~~~~~~~~~~~~~~~~')
             node =nodes.paragraph()
             self.state.nested_parse(contentlst, 0, node)
             return node
@@ -1073,11 +1100,18 @@ class cnColorDirectivecls(SphinxDirective):
             newdict['caption'] = self.arguments[0]
 
         parentnode = cncolordirective('', '', *[], **{**self.options,**newdict})
+        lineno = 0
+        linecount = len(self.content)
         for line in self.content:
+            lineno +=1
             if len(line)>0:
-                text_nodes, messages = self.state.inline_text(line, 0)
+                text_nodes, messages = self.state.inline_text(line, lineno)
                 node = cncolorline(line, '', *text_nodes, **self.options)
                 parentnode+=node
+                if linecount > 1 and lineno < linecount:
+                    #为每一行加一行换行符
+                    nodetext = cncolortext("")
+                    parentnode += nodetext
             else:
                 node = cncolortext(line)
                 parentnode+=node
@@ -1090,6 +1124,15 @@ class cnColorDirectivecls(SphinxDirective):
         if 'classes' in self.options:
             classes.extend(self.options['classes'])
         self.assert_has_content()
+
+        if hasattr(self.env, 'cncolorfile') and (self.env.docname not in self.env.cncolorfile):
+            # print("-----------html enter---------------------")
+            self.env.cncolorfile.append(self.env.docname)
+        else:
+            # print("-----------html enter1---------------------")
+            self.env.cncolorfile = []
+            self.env.cncolorfile.append(self.env.docname)
+        
         if 'literal' in self.options.keys():
             del self.options['literal'] #先将非必须的option删除
             # 将标题保存传出去
@@ -1104,8 +1147,9 @@ class cnColorDirectivecls(SphinxDirective):
             node.line = self.content_offset + 1
             self.add_name(node)
             return [node] + messages
-        elif (('underline' or 'strike') in self.options.keys()) and \
-                (self.env.app.builder.name=='latex' or self.env.app.builder.name=='latexpdf'):
+        elif ('underline'  in self.options.keys() or \
+                'strike' in self.options.keys() or \
+                'isparsedliteral' in self.options.keys()):
             return self.__GetLineNode()
         else:
             return self.__GetNoliteralNode()
@@ -1124,7 +1168,7 @@ class cnColorDirectivecls(SphinxDirective):
         返回标题名称列表和段落内容列表。
         '''
         #搜索可能的标题
-        searchstr = r"([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e]+)\n?"
+        searchstr = r"^([\x21-\x2f|\x3a-\x40|\x5b-\x60|\x7b-\x7e])\1+$"
         text = content[1]
         #判断第2个是否为标题符号行
         match = re.match(searchstr,text)
@@ -1134,6 +1178,53 @@ class cnColorDirectivecls(SphinxDirective):
         
         return None,content
         
+class cnparsedliteralDirectivecls(cnColorDirectivecls):
+    '''
+    自定义cnparsed-literal指令类，模拟sphinx parsed-literal的指令。
+    cnparsed-literal相对于parsed-literal指令，有以下优点：
+    1.可以自动换行，避免了因为verbatimmaxunderfull的配置导致编译失败，或者预留换行宽度太宽的问题。
+    2.可以自定义背景色、字体颜色等相关属性。
+    3.可以动态调整行间距和字体大小，当因为换行超出文本块可显示宽度时，可以通过动态调整这两个参数达到最好的显示效果。
+    cnparsed-literal指令因为只是为了模仿latex下和parsed-literal的显示效果一致，因此只用于pdf输出，对html没效果。
+    如果也想影响html，请使用cncolor指令。
+    * spacing: 设置行间距，浮点数或整数形式，如果不是浮点数或整数形式，会导致异常。
+    * font-size：只支持设置latex定义的字体大小，对html无效。html字体设置请使用fontsize选项。
+      latex支持的字体大小：'tiny','scriptsize','footnotesize','small','normalsize','large','Large','LARGE','huge','Huge'。
+    * 其它参数同cncolor的处理。
+    cnparsed-literal指令因为用的是tcolorbox包，因此不支持自动分页。
+    如果需要分页，要么用官方的parsed-literal指令，要么手动分页。即在需要分页的地方用两个cnparsed-literal指令分开。
+    '''
+    option_spec={
+        'spacing': directives.unchanged,
+        'font-size': directives.unchanged,
+        'literal': directives.flag,
+        'color': directives.unchanged,
+        'bgcolor': directives.unchanged,
+        'underline': directives.flag,
+        'strike': directives.flag,
+        'italic': directives.flag,
+        'bold': directives.flag,
+        'class': directives.class_option,
+        'name': directives.unchanged,
+        'istitle': directives.flag,
+    }
+
+    def run(self):
+        self.options['isparsedliteral'] = True
+        set_classes(self.options)
+        classes = ['cncolorblock']
+        if 'classes' in self.options:
+            classes.extend(self.options['classes'])
+        self.assert_has_content()
+        
+        if hasattr(self.env, 'cncolorfile') and (self.env.docname not in self.env.cncolorfile):
+            # print("-----------html enter---------------------")
+            self.env.cncolorfile.append(self.env.docname)
+        else:
+            # print("-----------html enter1---------------------")
+            self.env.cncolorfile = []
+            self.env.cncolorfile.append(self.env.docname)
+        return super(cnparsedliteralDirectivecls,self).run()
                         
 def __GetHtmlStyleAttr(nodeattr):
     '''
@@ -1190,7 +1281,7 @@ def __GetlatexStyleAttr(self,nodeattr):
     node属性是一个字典对象
     '''
     attr = ''
-    fontupper = 'fontupper='
+    fontupper = ''
     colorlst = []  #自定义颜色列表
     keys = nodeattr.keys()
     #指令参数名称即为字典的key值
@@ -1216,6 +1307,9 @@ def __GetlatexStyleAttr(self,nodeattr):
             colorlst.append(definecolor)
         else:
             attr +="colback=" + nodeattr['bgcolor'] + ','
+    elif 'isparsedliteral' in keys:
+        # isparsedliteral 默认采用自定义shadecolor，shadecolor这个颜色的定义参见conf.json文件
+        attr += "colback=shadecolor,colframe=shadecolor,left*=0mm," 
     else:
         attr += "colback=white,colframe=white,left*=0mm," #没有配置背景色，则采用白色背景色，制造没有背景色的假象。否则默认为灰色。
         
@@ -1223,7 +1317,9 @@ def __GetlatexStyleAttr(self,nodeattr):
         attr += 'title='+nodeattr['caption'] +r',fonttitle=\bfseries,'
         #给title添加背景色，否则title默认为白色，显示不出来
         attr += 'colbacktitle = black!50!blue,'
-            
+
+    if 'isparsedliteral' in keys:
+        fontupper += r'\ttfamily' #和sphinx的parsed-literal指令保持一致，默认为等宽字体
     if 'italic' in keys:
         fontupper += r'\itshape'
     if 'bold' in keys:
@@ -1234,6 +1330,12 @@ def __GetlatexStyleAttr(self,nodeattr):
         attrstr = 'font-size:' + nodeattr['fontsize']
         latexflag = __GetLatexFontSizeFlag(attrstr, 'font-size')
         fontupper += latexflag
+    if 'font-size' in keys:
+        fontupper += '\\' + nodeattr['font-size']
+    elif 'isparsedliteral' in keys:
+        fontupper += r'\small'  #sphinx parsed-literal默认字体比正常字体小一号，因此默认用small大小字体
+    if len(fontupper) > 0:
+        fontupper = 'fontupper=' + fontupper
     
     #print(attr+fontupper)
     return attr+fontupper, colorlst
@@ -1302,7 +1404,15 @@ def latex_depart_cncolorsection_node(self, node):
 def html_visit_cncolordirective_node(self, node):
     self.strikeflag = False #是否有删除标志
     attrs,self.strikeflag = __GetHtmlStyleAttr(node.attributes)
-    tag = self.starttag(node,'div','',CLASS='cncolorblock',**attrs)
+    node_keys = node.attributes.keys()
+    if 'isparsedliteral' in node_keys:
+        #html和sphinx的parsed-literal保持一致的行为
+        tag = self.starttag(node, 'pre', '', CLASS='literal-block', **attrs)
+    elif ('underline' in node_keys) or ('strike' in node_keys):
+        #按行解析的需要用pre标签，不能用div标签否则格式不是预期的格式
+        tag = self.starttag(node, 'pre', '', CLASS='cncolorblock', **attrs)
+    else:
+        tag = self.starttag(node,'div','',CLASS='cncolorblock',**attrs)
     self.body.append(tag)
     
     if self.strikeflag:
@@ -1320,7 +1430,10 @@ def html_depart_cncolordirective_node(self, node):
         self.strikeflag = False
     if node.tagname == 'cncolorliteral':
         self.body.append('</pre>')
-    self.body.append('</div>')
+    if 'isparsedliteral' in node.attributes.keys():
+        self.body.append('</pre>\n')
+    else:
+        self.body.append('</div>')
 
 def latex_visit_cncolordirective_node(self, node):
     
@@ -1329,7 +1442,13 @@ def latex_visit_cncolordirective_node(self, node):
     for color in colorlst:
         self.body.append(color)
         self.body.append('\n')
-    latexpre = r'\begin{tcolorbox}[arc=0mm,boxrule=0mm,left=0mm,' + latexattr + ']' + '\n'
+    if 'isparsedliteral' in node.attributes.keys():
+        if 'spacing' in node.attributes.keys():
+            latexpre = r'\begin{spacing}{' + node.attributes['spacing'] + '}\n'+r'\begin{tcolorbox}[arc=0mm,boxrule=-1mm,left=0mm,right=0mm,' + latexattr + ',breakable]\n'
+        else:
+            latexpre = r'\begin{spacing}{1.3}'+'\n'+r'\begin{tcolorbox}[arc=0mm,boxrule=-1mm,left=0mm,right=0mm,' + latexattr + ',breakable]\n'
+    else:
+        latexpre = r'\begin{tcolorbox}[arc=0mm,boxrule=0mm,left=0mm,' + latexattr + ',breakable]\n'
     #print(latexpre)
     self.body.append(latexpre)
     if node.tagname == 'cncolorliteral':
@@ -1342,7 +1461,14 @@ def latex_depart_cncolordirective_node(self, node):
         self.body.append('\n'+r'\end{Verbatim}' + '\n')
 
     self.body.append('\n'+ r'\end{tcolorbox}' + '\n')
-
+    if 'isparsedliteral' in node.attributes.keys():
+        self.body.append('\n'+r'\end{spacing}'+'\n')
+def html_visit_cncolorline_node(self,node):
+    pass
+def html_depart_cncolorline_node(self,node):
+    #self.body.append('\n')
+    pass
+    
 def latex_visit_cncolorline_node(self,node):
     #print('cncolorline')
     latexattr = ''
@@ -1354,19 +1480,24 @@ def latex_visit_cncolorline_node(self,node):
         #print("underline")
         latexattr = r"\uline{" + latexattr
         self.linecount += 1
-    self.body.append(latexattr)
+    if self.linecount > 0:
+        self.body.append(latexattr)
     
 def latex_depart_cncolorline_node(self,node):
     for i in range(self.linecount, 0, -1):
         #print(self.linecount)
         self.body.append('}')
+    #self.body.append('\\\\'+'\n')
     self.linecount = 0
-
+def html_visit_cncolortext_node(self,node):
+    pass
+def html_depart_cncolortext_node(self,node):
+    self.body.append('\n')
 def latex_visit_cncolortext_node(self,node):
-    self.body.append('\n\\\\')
+    pass
     
 def latex_depart_cncolortext_node(self,node):
-    pass
+    self.body.append('\\\\'+'\n')
 
 def doctree_resolved_process_titlenodes(app, doctree, fromdocname):
     #if fromdocname=='preface/preface':
@@ -1545,7 +1676,18 @@ def html_page_context_handle(app, pagename, templatename, context, doctree):
         if pagename in app.env.htmlfile:
             #修改body内容
             context['body']= __ModfiyTitleh0toh1(context['body'])
-            
+
+def modfiletimestamp(filename):
+    '''
+    强制修改文件时间戳，为了make html后，强制make latex强制刷新文件
+    '''
+    #stinfo = os.stat(filename)
+    #print(filename)
+    #print(stinfo)
+    current_time = time.time()
+    os.utime(filename, (current_time, current_time))
+    #stinfo = os.stat(filename)
+    #print(stinfo)
 def env_get_outdated_handler(app,env,docnames):
     #实现增量编译，将带cncolor指令的文件重新编译，否则latex可能无法生成
     if hasattr(env, 'sectionfile'):
@@ -1558,6 +1700,17 @@ def env_get_outdated_handler(app,env,docnames):
             if file not in docnames:
                 #print(file)
                 docnames.append(file)
+    #if hasattr(env, 'cncolorfile'):
+    #    print('----outdated enter----------')
+    #    print(env.cncolorfile)
+    #    print(docnames)
+    #    for file in env.cncolorfile:
+    #        if file not in docnames:
+    #            print(file)
+    #            docnames.append(file)
+    #for file in docnames:
+    #    modfiletimestamp(env.doc2path(file))
+        
 def env_updated_handler(app,env):
     #print('-----updated------------')
     #print(env.all_docs)
@@ -1567,15 +1720,28 @@ def env_updated_handler(app,env):
 def config_inited_handler(app,config):
     #加载ulem包，否则latex不支持下划线和删除线
     if 'extrapackages' not in app.config.latex_elements.keys():
-        #app.config.latex_elements['extrapackages'] = r'\usepackage[normalem]{ulem}'
-        app.config.latex_elements['extrapackages'] = r'\usepackage{seqsplit}'
-    elif r'\usepackage{seqsplit}' not in app.config.latex_elements['extrapackages']:
-        app.config.latex_elements['extrapackages'] += r'\usepackage{seqsplit}'
-    #elif r'\usepackage[normalem]{ulem}' not in app.config.latex_elements['extrapackages']:
-    #    app.config.latex_elements['extrapackages'] += r'\usepackage[normalem]{ulem}'
-    
-def setup(app):
+        app.config.latex_elements['extrapackages'] = r'\usepackage{seqsplit}'+'\n'
+        if os.path.exists(ulempath):
+            app.config.latex_elements['extrapackages'] += r'\usepackage[normalem]{ulem}' + '\n'
+    else:
+        if r'\usepackage{seqsplit}' not in app.config.latex_elements['extrapackages']:
+            app.config.latex_elements['extrapackages'] += r'\usepackage{seqsplit}'+'\n'
+        if os.path.exists(ulempath) and \
+                (r'\usepackage[normalem]{ulem}' not in app.config.latex_elements['extrapackages']):
+            app.config.latex_elements['extrapackages'] += r'\usepackage[normalem]{ulem}'+'\n'
+            
+def cd_build_finished_handler(app, exception):
+    if os.path.exists(ulempath) and \
+            (app.builder.name == "latex" or \
+        app.builder.name == "latexpdf"):
+        destpath = os.path.join(app.outdir,'ulem.sty')
+        shutil.copy(ulempath, destpath)
 
+#得到当前路径，用于判断需要的ulem.sty文件是否存在，如果存在，直接copy到latex目录下。
+curpath = os.path.dirname(os.path.realpath(__file__))
+ulempath = os.path.join(curpath,'ulem.sty')
+
+def setup(app):
     app.add_directive('cntoctree', TocTreeFilt)
     app.add_directive('cnonly',CNOnly)
     app.connect('doctree-resolved', doctree_resolved_process_titlenodes)
@@ -1584,9 +1750,11 @@ def setup(app):
     app.connect('env-before-read-docs',env_get_outdated_handler)
     app.connect('env-updated', env_updated_handler)
     app.connect('config-inited', config_inited_handler)
+    app.connect('build-finished', cd_build_finished_handler)
 
     #-----------cncolor directive----------------------------------------------------------------
     app.add_directive('cncolor',cnColorDirectivecls)
+    app.add_directive('cnparsed-literal', cnparsedliteralDirectivecls)
     app.add_node(cncolorliteral,
                  html=(html_visit_cncolordirective_node, html_depart_cncolordirective_node),
                  latex=(latex_visit_cncolordirective_node, latex_depart_cncolordirective_node))
@@ -1597,8 +1765,10 @@ def setup(app):
                  html=(html_visit_cncolorsection_node, html_depart_cncolorsection_node),
                  latex=(latex_visit_cncolorsection_node, latex_depart_cncolorsection_node))
     app.add_node(cncolorline,
+                 html=(html_visit_cncolorline_node, html_depart_cncolorline_node),
                  latex=(latex_visit_cncolorline_node, latex_depart_cncolorline_node))
     app.add_node(cncolortext,
+                 html=(html_visit_cncolortext_node, html_depart_cncolortext_node),
                  latex=(latex_visit_cncolortext_node, latex_depart_cncolortext_node))
     #------------cncolor role--------------------------------------------------------------------
     app.add_node(cncolorrolenode,

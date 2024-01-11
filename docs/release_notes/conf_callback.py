@@ -50,14 +50,6 @@ try:
 except Exception as e:
     breathe_version = ""
 
-#如果没有jieba，安装jieba插件，以支持html中文搜索
-import subprocess
-args = ['pip3','install','jieba']
-try:
-    subprocess.check_call(args)
-except subprocess.CalledProcessError:
-    pass
-
 warnfile = ''  # 告警文件，不包含路径
 warnfilepath = ''  # 保存告警日志文件，包含完整的路径名
 
@@ -141,6 +133,7 @@ def docview_modifyconfig(config):
     #设置js脚本
     config.html_js_files = [('custom.js', {'pdfname': pdfname}),'cndeveloper.js']
     config.html_css_files = ['custom.css']
+    config.html_permalinks = True
     
 def modifycommonconfig(config):
     """
@@ -192,8 +185,10 @@ def config_inited_handler(app, config):
         if 'sphinxsetup' not in keys:
             config.latex_elements['sphinxsetup'] = ''
         if "3.5" <= sphinx.__display_version__[:3]:
-            config.latex_elements['sphinxsetup'] = 'verbatimforcewraps=true,verbatimmaxunderfull=2,' + \
-                                                   config.latex_elements['sphinxsetup']
+            config.latex_elements['sphinxsetup'] += 'verbatimforcewraps=true,verbatimmaxunderfull=13,'
+        #if "3.5" <= sphinx.__display_version__[:3] and \
+        #        "7.2" > sphinx.__display_version__[:3]:
+        #    config.latex_elements['sphinxsetup'] += 'verbatimmaxunderfull=2,'
         if "5.3" <= sphinx.__display_version__[:3]:
             config.latex_table_style = ['standard', 'nocolorrows']
             config.latex_elements['sphinxsetup'] += 'pre_border-radius=0pt,'

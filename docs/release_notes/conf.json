@@ -70,7 +70,7 @@
     "isfiguretabletoc": {
         "comment": "插图目录英文：List of  Figures;表格目录英文：List of Tables.",
         "isfigurestoc": false,
-        "istablestoc": false,
+        "istablestoc": true,
         "figurestoc": [
             "\\\\renewcommand\\\\listfigurename{插\\ 图\\ 目\\ 录}",
             "\\\\listoffigures"
@@ -99,8 +99,7 @@
             },
             {
                 "align": "centering",
-                "caption": "版本记录",
-                "captionalign": "left",
+                "caption": "测试过的版本组合",
                 "isLongTable": false,
                 "isVertical": true,
                 "isCusHead": false,
