@@ -8,12 +8,15 @@ cnpipe {
     def docker_image_19 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.9_develop/ubuntu20.04/3.7/latest").get("docker")
     // 获取torch1.13 daily docker
     def docker_image_113 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/catch_1.13.1_develop/ubuntu20.04/3.10/latest").get("docker")
+    // 获取torch2.1 daily docker
+    def docker_image_210 = package.properties("http://daily.software.cambricon.com/daily/pytorch/docker/master/ubuntu20.04/3.10/latest").get("docker")
     // 运行单元测试
-    task('run_unit_test_catch_1.9', unit_test(docker_image_19, this.gitlabSourceBranch))
-    task('run_unit_test_catch_1.13', unit_test(docker_image_113, this.gitlabSourceBranch))
+    task('run_unit_test_catch_1.9', unit_test(docker_image_19))
+    task('run_unit_test_catch_1.13', unit_test(docker_image_113))
+    task('run_unit_test_catch_2.1', unit_test(docker_image_210))
 }
 
-def unit_test(docker_image, branch_name) {
+def unit_test(docker_image) {
     return {
         stage 'test_mmcv_ops'
         timeout 120

@@ -63,6 +63,7 @@ build_all_wheels_func() {
     case $PYTORCH_VERSION in
       "1.9") PYTORCH_FULL_VERSION="1.9.0" ;;
       "1.13") PYTORCH_FULL_VERSION="1.13.1" ;;
+      "2.1") PYTORCH_FULL_VERSION="2.1.0" ;;
       *) echo "Unknown PYTORCH_FULL_VERSION"; exit 1 ;;
     esac
 
