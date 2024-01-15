@@ -113,7 +113,5 @@ void roi_align_rotated_backward_impl(Tensor top_grad, Tensor rois,
                                      int sampling_ratio, bool aligned,
                                      bool clockwise);
 
-REGISTER_DEVICE_IMPL(roi_align_rotated_forward_impl, MLU,
-                     roi_align_rotated_forward_mlu);
-REGISTER_DEVICE_IMPL(roi_align_rotated_backward_impl, MLU,
-                     roi_align_rotated_backward_mlu);
+REGISTER_MLU_IMPL(roi_align_rotated_forward_impl, roi_align_rotated_forward_mlu);
+REGISTER_MLU_IMPL(roi_align_rotated_backward_impl, roi_align_rotated_backward_mlu);

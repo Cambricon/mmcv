@@ -93,11 +93,15 @@ std::vector<torch::Tensor> get_indice_pairs_forward(
     AT_ERROR("get_indice_pairs is not compiled with GPU support");
 #endif
 #ifdef MMCV_WITH_MLU
+#ifdef MMCV_WITH_MLU_KPRIVATE
+  } else if (indices.device().type() == at::kPrivateUse1) {
+#else
   } else if (indices.device().type() == at::kMLU) {
+#endif // MMCV_WITH_MLU_KPRIVATE
     return get_indice_pairs_forward_mlu<NDim>(
         indices, batchSize, outSpatialShape, spatialShape, kernelSize, stride,
         padding, dilation, outPadding, _subM, _transpose);
-#endif
+#endif // MMCV_WITH_MLU
   } else {
     AT_ERROR("get_indice_pairs is not implemented on CPU");
   }

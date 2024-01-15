@@ -10,8 +10,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *************************************************************************/
 #include "mlu_common_helper.h"
-#include "pytorch_device_registry.hpp"
-#include "pytorch_mlu_helper.hpp"
 
 Tensor MsDeformAttnForwardLauncher(const Tensor& value,
                                    const Tensor& spatial_shapes,
@@ -122,8 +120,6 @@ void ms_deform_attn_impl_backward(
     const Tensor& attn_weight, const Tensor& grad_output, Tensor& grad_value,
     Tensor& grad_sampling_loc, Tensor& grad_attn_weight, const int im2col_step);
 
-REGISTER_DEVICE_IMPL(ms_deform_attn_impl_forward, MLU,
-                     ms_deform_attn_mlu_forward);
+REGISTER_MLU_IMPL(ms_deform_attn_impl_forward, ms_deform_attn_mlu_forward);
 
-REGISTER_DEVICE_IMPL(ms_deform_attn_impl_backward, MLU,
-                     ms_deform_attn_mlu_backward);
+REGISTER_MLU_IMPL(ms_deform_attn_impl_backward, ms_deform_attn_mlu_backward);

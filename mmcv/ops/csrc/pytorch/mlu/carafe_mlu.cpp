@@ -204,5 +204,5 @@ void carafe_backward_impl(Tensor top_grad, Tensor rfeatures, Tensor masks,
                           Tensor bottom_grad, Tensor mask_grad, int kernel_size,
                           int group_size, int scale_factor);
 
-REGISTER_DEVICE_IMPL(carafe_forward_impl, MLU, carafe_forward_mlu);
-REGISTER_DEVICE_IMPL(carafe_backward_impl, MLU, carafe_backward_mlu);
+REGISTER_MLU_IMPL(carafe_forward_impl, carafe_forward_mlu);
+REGISTER_MLU_IMPL(carafe_backward_impl, carafe_backward_mlu);

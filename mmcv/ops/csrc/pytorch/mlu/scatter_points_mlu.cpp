@@ -94,7 +94,6 @@ void dynamic_point_to_voxel_backward_mlu(
 
   const int num_input = feats.size(0);
   const int num_reduced = reduced_feats.size(0);
-  const int num_feats = feats.size(1);
 
   grad_feats.fill_(0);
 
@@ -108,8 +107,13 @@ void dynamic_point_to_voxel_backward_mlu(
 
   int voxel_num_value = reduced_feats.size(0);
   auto opts = torch::TensorOptions().dtype(torch::kInt32);
+#ifdef MMCV_WITH_MLU_KPRIVATE 
+  auto voxel_num =
+      torch::from_blob(&voxel_num_value, {1}, opts).clone().to(at::kPrivateUse1);
+#else
   auto voxel_num =
       torch::from_blob(&voxel_num_value, {1}, opts).clone().to(at::kMLU);
+#endif
   auto mlu_reduce_type = getMluOpReduceMode(reduce_type);
 
   INITIAL_MLU_PARAM_WITH_TENSOR(grad_feats);
@@ -150,7 +154,5 @@ void dynamic_point_to_voxel_backward_impl(
     const Tensor &reduced_feats, const Tensor &coors_idx,
     const Tensor &reduce_count, const reduce_t reduce_type);
 
-REGISTER_DEVICE_IMPL(dynamic_point_to_voxel_forward_impl, MLU,
-                     dynamic_point_to_voxel_forward_mlu);
-REGISTER_DEVICE_IMPL(dynamic_point_to_voxel_backward_impl, MLU,
-                     dynamic_point_to_voxel_backward_mlu);
+REGISTER_MLU_IMPL(dynamic_point_to_voxel_forward_impl, dynamic_point_to_voxel_forward_mlu);
+REGISTER_MLU_IMPL(dynamic_point_to_voxel_backward_impl, dynamic_point_to_voxel_backward_mlu);

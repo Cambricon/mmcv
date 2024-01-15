@@ -43,9 +43,13 @@ Tensor nms_rotated(const Tensor dets, const Tensor scores, const Tensor order,
     AT_ERROR("Not compiled with NPU support");
 #endif
 #ifdef MMCV_WITH_MLU
+#ifdef MMCV_WITH_MLU_KPRIVATE
+  } else if (dets.device().type() == at::kPrivateUse1) {
+#else
   } else if (dets.device().type() == at::kMLU) {
+#endif // MMCV_WITH_MLU_KPRIVATE
     return nms_rotated_mlu(dets, scores, iou_threshold);
-#endif
+#endif // MMCV_WITH_MLU
   }
 
   return nms_rotated_cpu(dets.contiguous(), scores.contiguous(), iou_threshold);

@@ -106,5 +106,5 @@ void psamask_backward_impl(const int psa_type, const Tensor grad_output,
                            const int h_mask, const int w_mask,
                            const int half_h_mask, const int half_w_mask);
 
-REGISTER_DEVICE_IMPL(psamask_forward_impl, MLU, psamask_forward_mlu);
-REGISTER_DEVICE_IMPL(psamask_backward_impl, MLU, psamask_backward_mlu);
+REGISTER_MLU_IMPL(psamask_forward_impl, psamask_forward_mlu);
+REGISTER_MLU_IMPL(psamask_backward_impl, psamask_backward_mlu);

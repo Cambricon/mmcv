@@ -51,4 +51,4 @@ void box_iou_rotated_mlu(const Tensor boxes1, const Tensor boxes2, Tensor ious,
 void box_iou_rotated_impl(const Tensor boxes1, const Tensor boxes2, Tensor ious,
                           const int mode_flag, const bool aligned);
 
-REGISTER_DEVICE_IMPL(box_iou_rotated_impl, MLU, box_iou_rotated_mlu);
+REGISTER_MLU_IMPL(box_iou_rotated_impl, box_iou_rotated_mlu);

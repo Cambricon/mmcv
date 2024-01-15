@@ -97,8 +97,7 @@ void roiaware_pool3d_forward_impl(int boxes_num, int pts_num, int channels,
                                   Tensor argmax, Tensor pts_idx_of_voxels,
                                   Tensor pooled_features, int pool_method);
 
-REGISTER_DEVICE_IMPL(roiaware_pool3d_forward_impl, MLU,
-                     roiaware_pool3d_forward_mlu);
+REGISTER_MLU_IMPL(roiaware_pool3d_forward_impl, roiaware_pool3d_forward_mlu);
 
 void RoiawarePool3dBackwardMLUKernelLauncher(
     int pool_method, int boxes_num, int out_x, int out_y, int out_z,
@@ -160,5 +159,4 @@ void roiaware_pool3d_backward_impl(int boxes_num, int out_x, int out_y,
                                    const Tensor argmax, const Tensor grad_out,
                                    Tensor grad_in, int pool_method);
 
-REGISTER_DEVICE_IMPL(roiaware_pool3d_backward_impl, MLU,
-                     roiaware_pool3d_backward_mlu);
+REGISTER_MLU_IMPL(roiaware_pool3d_backward_impl, roiaware_pool3d_backward_mlu);

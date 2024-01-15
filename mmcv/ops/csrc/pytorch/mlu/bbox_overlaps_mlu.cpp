@@ -53,4 +53,4 @@ void bbox_overlaps_mlu(const Tensor bboxes1, const Tensor bboxes2, Tensor ious,
 void bbox_overlaps_impl(const Tensor bboxes1, const Tensor bboxes2, Tensor ious,
                         const int mode, const bool aligned, const int offset);
 
-REGISTER_DEVICE_IMPL(bbox_overlaps_impl, MLU, bbox_overlaps_mlu);
+REGISTER_MLU_IMPL(bbox_overlaps_impl, bbox_overlaps_mlu);

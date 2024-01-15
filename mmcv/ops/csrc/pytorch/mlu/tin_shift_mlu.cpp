@@ -134,5 +134,5 @@ void tin_shift_forward_impl(Tensor input, Tensor shift, Tensor output);
 void tin_shift_backward_impl(Tensor grad_output, Tensor shift,
                              Tensor grad_input);
 
-REGISTER_DEVICE_IMPL(tin_shift_forward_impl, MLU, tin_shift_forward_mlu);
-REGISTER_DEVICE_IMPL(tin_shift_backward_impl, MLU, tin_shift_backward_mlu);
+REGISTER_MLU_IMPL(tin_shift_forward_impl, tin_shift_forward_mlu);
+REGISTER_MLU_IMPL(tin_shift_backward_impl, tin_shift_backward_mlu);

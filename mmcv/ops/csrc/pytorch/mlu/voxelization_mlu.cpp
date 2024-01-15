@@ -32,6 +32,17 @@ int HardVoxelizeForwardMLUKernelLauncher(
   std::vector<float> _voxel_size(voxel_size.begin(), voxel_size.end());
   std::vector<float> _coors_range(coors_range.begin(), coors_range.end());
   auto opts = torch::TensorOptions().dtype(torch::kFloat32);
+#ifdef MMCV_WITH_MLU_KPRIVATE
+  auto voxel_size_tensor =
+      torch::from_blob(_voxel_size.data(), {int64_t(_voxel_size.size())}, opts)
+          .clone()
+          .to(at::kPrivateUse1);
+  auto coors_range_tensor =
+      torch::from_blob(_coors_range.data(), {int64_t(_coors_range.size())},
+                       opts)
+          .clone()
+          .to(at::kPrivateUse1);
+#else
   auto voxel_size_tensor =
       torch::from_blob(_voxel_size.data(), {int64_t(_voxel_size.size())}, opts)
           .clone()
@@ -41,6 +52,7 @@ int HardVoxelizeForwardMLUKernelLauncher(
                        opts)
           .clone()
           .to(at::kMLU);
+#endif // MMCV_WITH_MLU_KPRIVATE
   INITIAL_MLU_PARAM_WITH_TENSOR(points);
   INITIAL_MLU_PARAM_WITH_TENSOR(voxels);
   INITIAL_MLU_PARAM_WITH_TENSOR(coors);
@@ -95,5 +107,4 @@ int hard_voxelize_forward_impl(const at::Tensor &points, at::Tensor &voxels,
                                const int max_points, const int max_voxels,
                                const int NDim);
 
-REGISTER_DEVICE_IMPL(hard_voxelize_forward_impl, MLU,
-                     hard_voxelize_forward_mlu);
+REGISTER_MLU_IMPL(hard_voxelize_forward_impl, hard_voxelize_forward_mlu);

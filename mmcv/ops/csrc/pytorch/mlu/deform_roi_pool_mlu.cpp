@@ -153,7 +153,5 @@ void deform_roi_pool_backward_impl(Tensor grad_output, Tensor input,
                                    float spatial_scale, int sampling_ratio,
                                    float gamma);
 
-REGISTER_DEVICE_IMPL(deform_roi_pool_forward_impl, MLU,
-                     deform_roi_pool_forward_mlu);
-REGISTER_DEVICE_IMPL(deform_roi_pool_backward_impl, MLU,
-                     deform_roi_pool_backward_mlu);
+REGISTER_MLU_IMPL(deform_roi_pool_forward_impl, deform_roi_pool_forward_mlu);
+REGISTER_MLU_IMPL(deform_roi_pool_backward_impl, deform_roi_pool_backward_mlu);

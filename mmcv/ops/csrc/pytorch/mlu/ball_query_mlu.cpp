@@ -44,4 +44,4 @@ void ball_query_forward_impl(int b, int n, int m, float min_radius,
                              const Tensor new_xyz, const Tensor xyz,
                              Tensor idx);
 
-REGISTER_DEVICE_IMPL(ball_query_forward_impl, MLU, ball_query_forward_mlu);
+REGISTER_MLU_IMPL(ball_query_forward_impl, ball_query_forward_mlu);

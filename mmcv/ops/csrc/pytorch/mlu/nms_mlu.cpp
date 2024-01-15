@@ -83,4 +83,4 @@ Tensor nms_mlu(Tensor boxes, Tensor scores, float iou_threshold, int offset) {
 }
 
 Tensor nms_impl(Tensor boxes, Tensor scores, float iou_threshold, int offset);
-REGISTER_DEVICE_IMPL(nms_impl, MLU, nms_mlu);
+REGISTER_MLU_IMPL(nms_impl, nms_mlu);

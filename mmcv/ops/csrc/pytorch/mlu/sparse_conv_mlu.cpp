@@ -14,8 +14,6 @@
 #include <vector>
 
 #include "mlu_common_helper.h"
-#include "pytorch_device_registry.hpp"
-#include "pytorch_mlu_helper.hpp"
 
 template <unsigned NDim>
 std::vector<torch::Tensor> GetIndicePairsForwardMLUKernelLauncher(
@@ -419,8 +417,8 @@ std::vector<torch::Tensor> indice_conv_backward_impl(
     torch::Tensor indicePairs, torch::Tensor indiceNum, int64_t _inverse,
     int64_t _subM);
 
-REGISTER_DEVICE_IMPL(indice_conv_forward_impl, MLU, indice_conv_forward_mlu);
-REGISTER_DEVICE_IMPL(indice_conv_backward_impl, MLU, indice_conv_backward_mlu);
+REGISTER_MLU_IMPL(indice_conv_forward_impl, indice_conv_forward_mlu);
+REGISTER_MLU_IMPL(indice_conv_backward_impl, indice_conv_backward_mlu);
 
 template std::vector<torch::Tensor> GetIndicePairsForwardMLUKernelLauncher<2>(
     torch::Tensor indices, int64_t batchSize,
