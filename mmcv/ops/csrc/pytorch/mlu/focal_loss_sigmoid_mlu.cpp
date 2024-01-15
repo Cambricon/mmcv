@@ -171,7 +171,5 @@ void sigmoid_focal_loss_backward_impl(Tensor input, Tensor target,
                                       Tensor weight, Tensor grad_input,
                                       float gamma, float alpha);
 
-REGISTER_DEVICE_IMPL(sigmoid_focal_loss_forward_impl, MLU,
-                     sigmoid_focal_loss_forward_mlu);
-REGISTER_DEVICE_IMPL(sigmoid_focal_loss_backward_impl, MLU,
-                     sigmoid_focal_loss_backward_mlu);
+REGISTER_MLU_IMPL(sigmoid_focal_loss_forward_impl, sigmoid_focal_loss_forward_mlu);
+REGISTER_MLU_IMPL(sigmoid_focal_loss_backward_impl, sigmoid_focal_loss_backward_mlu);

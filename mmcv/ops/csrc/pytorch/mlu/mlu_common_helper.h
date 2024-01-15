@@ -33,6 +33,7 @@ using torch_mlu::get_channels_last_memory_format;
 
 #include "mlu_op.h"
 #include "pytorch_device_registry.hpp"
+#include "pytorch_mlu_helper.hpp"
 
 /*************************************************************************
  * This MACRO contains operations of simple tensor to mlu-tensor.

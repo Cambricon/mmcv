@@ -332,6 +332,8 @@ def get_extensions():
                         exit()
 
             define_macros += [('MMCV_WITH_MLU', None)]
+            if parse_version(torch.__version__) > parse_version('2.0.0'):
+                define_macros += [('MMCV_WITH_MLU_KPRIVATE', None)]
             if '1.9' in torch.__version__:
                 define_macros += [('MMCV_WITH_TORCH19', None)]
             mlu_args = os.getenv('MMCV_MLU_ARGS', '-DNDEBUG ')

@@ -109,7 +109,5 @@ void rotated_feature_align_backward_impl(const Tensor top_grad,
                                          const float spatial_scale,
                                          const int points, Tensor bottom_grad);
 
-REGISTER_DEVICE_IMPL(rotated_feature_align_forward_impl, MLU,
-                     rotated_feature_align_forward_mlu);
-REGISTER_DEVICE_IMPL(rotated_feature_align_backward_impl, MLU,
-                     rotated_feature_align_backward_mlu);
+REGISTER_MLU_IMPL(rotated_feature_align_forward_impl, rotated_feature_align_forward_mlu);
+REGISTER_MLU_IMPL(rotated_feature_align_backward_impl, rotated_feature_align_backward_mlu);

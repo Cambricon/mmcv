@@ -68,6 +68,13 @@ inline int32_t getCoreNumOfJobLimitCapability() {
   }
 }
 
+#ifdef MMCV_WITH_MLU_KPRIVATE
+#define REGISTER_MLU_IMPL(key, value) REGISTER_DEVICE_IMPL(key, PrivateUse1, value)
+#else
+#define REGISTER_MLU_IMPL(key, value) \
+  REGISTER_DEVICE_IMPL(key, MLU, value)
+#endif // MMCV_WITH_MLU_KPRIVATE
+
 #endif  // MMCV_WITH_MLU
 
 #endif  // PYTORCH_MLU_HELPER_HPP_

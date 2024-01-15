@@ -76,4 +76,4 @@ void iou3d_nms3d_forward_mlu(const Tensor boxes, Tensor &keep, Tensor &keep_num,
 
 void iou3d_nms3d_forward_impl(const Tensor boxes, Tensor &keep,
                               Tensor &keep_num, float nms_overlap_thresh);
-REGISTER_DEVICE_IMPL(iou3d_nms3d_forward_impl, MLU, iou3d_nms3d_forward_mlu);
+REGISTER_MLU_IMPL(iou3d_nms3d_forward_impl, iou3d_nms3d_forward_mlu);

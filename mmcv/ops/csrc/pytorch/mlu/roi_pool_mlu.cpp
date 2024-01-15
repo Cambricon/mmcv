@@ -205,5 +205,5 @@ void roi_pool_backward_impl(Tensor grad_output, Tensor rois, Tensor argmax,
                             Tensor grad_input, int pooled_height,
                             int pooled_width, float spatial_scale);
 
-REGISTER_DEVICE_IMPL(roi_pool_forward_impl, MLU, roi_pool_forward_mlu);
-REGISTER_DEVICE_IMPL(roi_pool_backward_impl, MLU, roi_pool_backward_mlu);
+REGISTER_MLU_IMPL(roi_pool_forward_impl, roi_pool_forward_mlu);
+REGISTER_MLU_IMPL(roi_pool_backward_impl, roi_pool_backward_mlu);

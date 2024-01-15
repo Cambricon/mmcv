@@ -181,5 +181,5 @@ void roi_align_backward_impl(Tensor grad_output, Tensor rois, Tensor argmax_y,
                              float spatial_scale, int sampling_ratio,
                              int pool_mode, bool aligned);
 
-REGISTER_DEVICE_IMPL(roi_align_forward_impl, MLU, roi_align_forward_mlu);
-REGISTER_DEVICE_IMPL(roi_align_backward_impl, MLU, roi_align_backward_mlu);
+REGISTER_MLU_IMPL(roi_align_forward_impl, roi_align_forward_mlu);
+REGISTER_MLU_IMPL(roi_align_backward_impl, roi_align_backward_mlu);

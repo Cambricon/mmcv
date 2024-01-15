@@ -217,7 +217,5 @@ void masked_col2im_forward_impl(const Tensor col, const Tensor mask_h_idx,
                                 const Tensor mask_w_idx, Tensor im, int height,
                                 int width, int channels);
 
-REGISTER_DEVICE_IMPL(masked_im2col_forward_impl, MLU,
-                     masked_im2col_forward_mlu);
-REGISTER_DEVICE_IMPL(masked_col2im_forward_impl, MLU,
-                     masked_col2im_forward_mlu);
+REGISTER_MLU_IMPL(masked_im2col_forward_impl, masked_im2col_forward_mlu);
+REGISTER_MLU_IMPL(masked_col2im_forward_impl, masked_col2im_forward_mlu);

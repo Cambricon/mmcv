@@ -363,8 +363,9 @@ class MultiScaleDeformableAttention(BaseModule):
             raise ValueError(
                 f'Last dim of reference_points must be'
                 f' 2 or 4, but get {reference_points.shape[-1]} instead.')
+        # revert change from device.type to is_mlu after release
         if ((IS_CUDA_AVAILABLE and value.is_cuda)
-                or (IS_MLU_AVAILABLE and value.is_mlu)):
+                or (IS_MLU_AVAILABLE and value.device.type == "mlu")):
             output = MultiScaleDeformableAttnFunction.apply(
                 value, spatial_shapes, level_start_index, sampling_locations,
                 attention_weights, self.im2col_step)

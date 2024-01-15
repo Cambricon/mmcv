@@ -60,4 +60,4 @@ void three_nn_forward_mlu(int b, int n, int m, const Tensor unknown,
 void three_nn_forward_impl(int b, int n, int m, const Tensor unknown,
                            const Tensor known, Tensor dist2, Tensor idx);
 
-REGISTER_DEVICE_IMPL(three_nn_forward_impl, MLU, three_nn_forward_mlu);
+REGISTER_MLU_IMPL(three_nn_forward_impl, three_nn_forward_mlu);

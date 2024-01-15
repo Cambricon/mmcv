@@ -146,5 +146,4 @@ void roipoint_pool3d_forward_impl(int batch_size, int pts_num, int boxes_num,
                                   Tensor pooled_features,
                                   Tensor pooled_empty_flag);
 
-REGISTER_DEVICE_IMPL(roipoint_pool3d_forward_impl, MLU,
-                     roipoint_pool3d_forward_mlu);
+REGISTER_MLU_IMPL(roipoint_pool3d_forward_impl, roipoint_pool3d_forward_mlu);

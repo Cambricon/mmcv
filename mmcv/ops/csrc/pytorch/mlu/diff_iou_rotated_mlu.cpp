@@ -51,5 +51,5 @@ Tensor diff_iou_rotated_sort_vertices_forward_mlu(Tensor vertices, Tensor mask,
 Tensor diff_iou_rotated_sort_vertices_forward_impl(Tensor vertices, Tensor mask,
                                                    Tensor num_valid);
 
-REGISTER_DEVICE_IMPL(diff_iou_rotated_sort_vertices_forward_impl, MLU,
-                     diff_iou_rotated_sort_vertices_forward_mlu);
+REGISTER_MLU_IMPL(diff_iou_rotated_sort_vertices_forward_impl,
+                  diff_iou_rotated_sort_vertices_forward_mlu);
