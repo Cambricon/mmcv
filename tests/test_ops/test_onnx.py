@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from packaging import version
+from pkg_resources import parse_version
 
 import mmcv
 
@@ -478,6 +479,8 @@ def test_roipool():
         assert np.allclose(pytorch_output, onnx_output, atol=1e-3)
 
 
+@pytest.mark.skipif(parse_version(torch.__version__) > parse_version('2.0.0'),
+        reason="using torch 2.1.x + mmcv 1.7.1 cause onnx error.")
 def test_interpolate():
     from mmcv.onnx.symbolic import register_extra_symbolics
     opset_version = 11
@@ -736,6 +739,8 @@ def test_cummax_cummin(key, opset=11):
 
 
 @pytest.mark.parametrize('shifts_dims_pair', [([-3, 5], [2, 0]), (5, None)])
+@pytest.mark.skipif(parse_version(torch.__version__) > parse_version('2.0.0'),
+        reason="using torch 2.1.x + mmcv 1.7.1 cause onnx error.")
 def test_roll(shifts_dims_pair):
     opset = 11
     from mmcv.onnx.symbolic import register_extra_symbolics

@@ -2,7 +2,7 @@
   "version": "v1.0.0",
   "official_version": "1.7",
   "build_requires": {
-    "catch_version": ["1.17.0"],
+    "catch_version": ["1.18.0"],
     "mluops": ["v0.11.0"]},
   "args_combination": {
     "wheel1": ["1.9", "3.6"],
