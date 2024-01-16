@@ -7,6 +7,5 @@
   "args_combination": {
     "wheel1": ["1.9", "3.7"],
     "wheel2": ["1.13", "3.10"]},
-    "wheel3": ["2.1", "3.10"],
   "package_type": ["whl", "docs", "src"]
 }
