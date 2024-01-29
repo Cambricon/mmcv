@@ -5,7 +5,6 @@
     "catch_version": ["1.18.0"],
     "mluops": ["v0.11.0"]},
   "args_combination": {
-    "wheel1": ["1.9", "3.7"],
-    "wheel2": ["1.13", "3.10"]},
+    "wheel1": ["1.13", "3.10"]},
   "package_type": ["whl", "docs", "src"]
 }
