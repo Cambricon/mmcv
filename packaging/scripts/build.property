@@ -2,9 +2,11 @@
   "version": "v1.0.0",
   "official_version": "1.7",
   "build_requires": {
-    "catch_version": ["1.18.0"],
+    "catch_113": ["1.18.0"],
+    "catch_210": ["24.01"],
     "mluops": ["v0.11.0"]},
   "args_combination": {
-    "wheel1": ["1.13", "3.10"]},
+    "wheel1": ["1.13", "3.10"],
+    "wheel2": ["2.1", "3.10"]},
   "package_type": ["whl", "docs", "src"]
 }

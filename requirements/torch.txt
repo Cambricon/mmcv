@@ -7,7 +7,7 @@ psutil
 pyyaml
 requests
 urllib3==1.26.6
-setuptools
+setuptools==65.5.1
 six
 types-dataclasses
 typing_extensions
