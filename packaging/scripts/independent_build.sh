@@ -33,7 +33,8 @@ build_all_wheels_func() {
   sleep 1
 
   # Read catch version from build.property file
-  CATCH_VERSION=$(grep -o '"catch_version": \["[^"]*' "$ABS_DIR_PATH/build.property" | sed 's/"catch_version": \["//')
+  CATCH_VERSION_113=$(grep -o '"catch_113": \["[^"]*' "$ABS_DIR_PATH/build.property" | sed 's/"catch_113": \["//')
+  CATCH_VERSION_210=$(grep -o '"catch_210": \["[^"]*' "$ABS_DIR_PATH/build.property" | sed 's/"catch_210": \["//')
 
   # Validate required variables
   if [[ -z "$MMCV_BRANCH" ]]; then
@@ -61,9 +62,8 @@ build_all_wheels_func() {
 
     # Map PYTORCH_VERSION to PYTORCH_FULL_VERSION
     case $PYTORCH_VERSION in
-      "1.9") PYTORCH_FULL_VERSION="1.9.0" ;;
-      "1.13") PYTORCH_FULL_VERSION="1.13.1" ;;
-      "2.1") PYTORCH_FULL_VERSION="2.1.0" ;;
+      "1.13") PYTORCH_FULL_VERSION="1.13.1" && CATCH_VERSION=$CATCH_VERSION_113;;
+      "2.1") PYTORCH_FULL_VERSION="2.1.0" && CATCH_VERSION=$CATCH_VERSION_210;;
       *) echo "Unknown PYTORCH_FULL_VERSION"; exit 1 ;;
     esac
 

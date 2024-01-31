@@ -43,6 +43,8 @@ def get_version():
     return locals()['__version__']
 
 def get_mlu_version():
+    if not (hasattr(torch, 'is_mlu_available') and torch.is_mlu_available()):
+        return "", ""
     version_file = 'packaging/scripts/build.property'
     import json
     # Read the content of the file
@@ -50,7 +52,14 @@ def get_mlu_version():
         data = json.load(file)
     version_value = data['version']
     mluops_version = data['build_requires']['mluops']
-    return version_value, mluops_version[0]
+    if '1.9' in torch.__version__:
+        pt_version = "pt19"
+    elif '1.13' in torch.__version__:
+        pt_version = "pt113"
+    elif '2.1' in torch.__version__:
+        pt_version = "pt21"
+    mlu_unique_version = "+" + version_value + "+" + pt_version
+    return mluops_version[0], mlu_unique_version
 
 def parse_requirements(fname='requirements/runtime.txt', with_version=True):
     """Parse the package dependencies listed in a requirements file but strips
@@ -281,10 +290,10 @@ def get_extensions():
                 os.getenv('FORCE_MLU', '0') == '1':
             from torch_mlu.utils.cpp_extension import MLUExtension
 
-            _, mmcv_mluops_version = get_mlu_version()
+            mmcv_mluops_version, _ = get_mlu_version()
             mlu_ops_path = os.getenv('MMCV_MLU_OPS_PATH')
             if mlu_ops_path:
-                _, exists_mluops_version = get_mlu_version()
+                exists_mluops_version, _ = get_mlu_version()
                 if exists_mluops_version != mmcv_mluops_version:
                     print('the version of mlu-ops provided is %s,'
                           ' while %s is needed.' %
@@ -324,7 +333,7 @@ def get_extensions():
                         except BadZipFile:
                             print('invalid mlu-ops.zip file')
                 else:
-                    _, exists_mluops_version = get_mlu_version()
+                    exists_mluops_version, _ = get_mlu_version()
                     if exists_mluops_version != mmcv_mluops_version:
                         print('the version of provided mlu-ops is %s,'
                               ' while %s is needed.' %
@@ -442,7 +451,7 @@ def get_extensions():
 
 setup(
     name='mmcv' if os.getenv('MMCV_WITH_OPS', '1') == '1' else 'mmcv-lite',
-    version=get_version() + "+" + get_mlu_version()[0],
+    version=get_version() + get_mlu_version()[1],
     description='OpenMMLab Computer Vision Foundation',
     keywords='computer vision',
     packages=find_packages(),
