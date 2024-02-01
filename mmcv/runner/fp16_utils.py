@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 
-from mmcv.utils import IS_NPU_AVAILABLE, TORCH_VERSION, digit_version
+from mmcv.utils import IS_NPU_AVAILABLE, IS_MLU_AVAILABLE, TORCH_VERSION, digit_version
 from .dist_utils import allreduce_grads as _allreduce_grads
 
 try:
@@ -20,6 +20,8 @@ try:
     # manually, so the behavior may not be consistent with real amp.
     if IS_NPU_AVAILABLE:
         from torch.npu.amp import autocast
+    elif IS_MLU_AVAILABLE:
+        from torch.mlu.amp import autocast
     else:
         from torch.cuda.amp import autocast
 except ImportError:

@@ -9,8 +9,8 @@ import torch.nn as nn
 from torch import Tensor
 from torch.nn.utils import clip_grad
 
-from mmcv.utils import (IS_NPU_AVAILABLE, TORCH_VERSION, _BatchNorm,
-                        digit_version)
+from mmcv.utils import (IS_NPU_AVAILABLE, IS_MLU_AVAILABLE, TORCH_VERSION,
+                        _BatchNorm, digit_version)
 from ..dist_utils import allreduce_grads
 from ..fp16_utils import LossScaler, wrap_fp16_model
 from .hook import HOOKS, Hook
@@ -20,6 +20,8 @@ try:
     # and used; otherwise, auto fp16 will adopt mmcv's implementation.
     if IS_NPU_AVAILABLE:
         from torch.npu.amp import GradScaler
+    elif IS_MLU_AVAILABLE:
+        from torch.mlu.amp import GradScaler
     else:
         from torch.cuda.amp import GradScaler
 except ImportError:
