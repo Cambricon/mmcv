@@ -69,6 +69,36 @@ mluOpReduceMode_t getMluOpReduceMode(const reduce_t reduce_type) {
   }
 }
 
+void MluOpDCNDescriptor::set(int dim, int* padding, int* stride,
+		             int* dilation, int64_t deformable_group,
+			     int64_t conv_group, int64_t im2col_step,
+			     mluOpDataType_t dtype) {
+  TORCH_CHECK(dim == 4, "DCN input's dim must equal to 4.");
+  int n = dim - 2;
+  int p_dim = 4;
+  std::vector<int> padding_vec(p_dim, 0);
+  std::vector<int> stride_vec(n, 0);
+  std::vector<int> dilation_vec(n, 0);
+  int deformable_group_t;
+  int conv_group_t;
+  int im2col_step_t;
+  for (int i = 0; i < p_dim; i++) {
+    padding_vec[i] = padding[i];
+  }
+  for (int i = 0; i < n; i++) {
+    stride_vec[i] = stride[i];
+    dilation_vec[i] = dilation[i];
+  }
+  deformable_group_t = deformable_group;
+  conv_group_t = conv_group;
+  im2col_step_t = im2col_step;
+  TORCH_CHECK(mluOpSetDCNDescriptor(desc_, dim, padding_vec.data(),
+                                    stride_vec.data(), dilation_vec.data(),
+                                    deformable_group_t, conv_group_t,
+                                    im2col_step_t, dtype) == MLUOP_STATUS_SUCCESS,
+	      "mluOpSetDCNDescriptor failed!");
+} 
+
 void MluOpTensorDescriptor::set(Tensor t) {
   mluOpDataType_t data_type = getMluOpDataType(t.dtype());
   mluOpTensorLayout_t layout = getMluOpSuggestLayout(t);

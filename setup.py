@@ -347,10 +347,9 @@ def get_extensions():
                 define_macros += [('MMCV_WITH_TORCH19', None)]
             mlu_args = os.getenv('MMCV_MLU_ARGS', '-DNDEBUG ')
             mluops_includes = []
-            mluops_includes.append('-I' +
-                                   os.path.abspath('./mlu-ops/bangc-ops'))
             mluops_includes.append(
-                '-I' + os.path.abspath('./mlu-ops/bangc-ops/kernels'))
+                '-I' + os.path.abspath('./mlu-ops/kernels'))
+            mluops_includes.append('-I' + os.path.abspath('./mlu-ops/'))
             extra_compile_args['cncc'] = [mlu_args] + \
                 mluops_includes if mlu_args else mluops_includes
             extra_compile_args['cxx'] += ['-fno-gnu-unique']
@@ -358,18 +357,20 @@ def get_extensions():
                 glob.glob('./mmcv/ops/csrc/pytorch/cpu/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/mlu/*.cpp') + \
                 glob.glob(
-                    './mlu-ops/bangc-ops/core/**/*.cpp', recursive=True) + \
+                    './mlu-ops/core/*.cpp', recursive=True) + \
                 glob.glob(
-                    './mlu-ops/bangc-ops/kernels/**/*.cpp', recursive=True) + \
+                    './mlu-ops/core/*/*/*.cpp', recursive=True) + \
                 glob.glob(
-                    './mlu-ops/bangc-ops/kernels/**/*.mlu', recursive=True)
+                    './mlu-ops/kernels/**/*.cpp', recursive=True) + \
+                glob.glob(
+                    './mlu-ops/kernels/**/*.mlu', recursive=True)
             extra_link_args = [
                 '-Wl,--whole-archive',
                 '-Wl,--no-whole-archive'
             ]
             extension = MLUExtension
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
-            include_dirs.append(os.path.abspath('./mlu-ops/bangc-ops'))
+            include_dirs.append(os.path.abspath('./mlu-ops/'))
         elif (hasattr(torch.backends, 'mps')
               and torch.backends.mps.is_available()) or os.getenv(
                   'FORCE_MPS', '0') == '1':

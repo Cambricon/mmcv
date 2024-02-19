@@ -96,6 +96,24 @@ class MluOpTensorDescriptor {
                 std::vector<int>& dims);
 };
 
+class MluOpDCNDescriptor {
+ public:
+  MluOpDCNDescriptor() {
+    TORCH_MLUOP_CHECK(mluOpCreateDCNDescriptor(&desc_));
+  };
+  ~MluOpDCNDescriptor() {
+    TORCH_MLUOP_CHECK(mluOpDestroyDCNDescriptor(desc_));
+  }
+  void set(int dim, int* padding, int* stride,
+	   int* dilation, int64_t deformable_group,
+	   int64_t conv_group, int64_t im2col_step,
+	   mluOpDataType_t dtype);
+  mluOpDCNDescriptor_t desc() { return desc_; }
+
+ private:
+  mluOpDCNDescriptor_t desc_;
+};
+
 mluOpHandle_t mluOpGetCurrentHandle(c10::DeviceIndex device_index = -1);
 
 class MluOpHandle {

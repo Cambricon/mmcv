@@ -110,9 +110,3 @@ __all__ = [
     'PrRoIPool', 'prroi_pool', 'bias_act', 'filtered_lrelu', 'conv2d',
     'conv_transpose2d', 'filter2d', 'upsample2d', 'BezierAlign', 'bezier_align'
 ]
-
-if IS_MLU_AVAILABLE:
-    from .deform_conv import DeformConv2dPack_MLU  # noqa:F401
-    from .modulated_deform_conv import \
-        ModulatedDeformConv2dPack_MLU  # noqa:F401
-    __all__.extend(['ModulatedDeformConv2dPack_MLU', 'DeformConv2dPack_MLU'])

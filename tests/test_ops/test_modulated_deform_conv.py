@@ -44,11 +44,7 @@ class TestMdconv:
     def _test_mdconv(self, dtype=torch.float, device='cuda'):
         if not torch.cuda.is_available() and device == 'cuda':
             pytest.skip('test requires GPU')
-        if device == 'mlu':
-            from mmcv.ops import \
-                ModulatedDeformConv2dPack_MLU as ModulatedDeformConv2dPack
-        else:
-            from mmcv.ops import ModulatedDeformConv2dPack
+        from mmcv.ops import ModulatedDeformConv2dPack
 
         input = torch.tensor(input_t, dtype=dtype, device=device)
         input.requires_grad = True
@@ -89,11 +85,7 @@ class TestMdconv:
         """
         if not torch.cuda.is_available() and device == 'cuda':
             return
-        if device == 'mlu':
-            from mmcv.ops import \
-                ModulatedDeformConv2dPack_MLU as ModulatedDeformConv2dPack
-        else:
-            from mmcv.ops import ModulatedDeformConv2dPack
+        from mmcv.ops import ModulatedDeformConv2dPack
 
         input = torch.tensor(input_t).to(device).type(input_dtype)
         input.requires_grad = True
@@ -144,10 +136,6 @@ class TestMdconv:
             'cuda',
             marks=pytest.mark.skipif(
                 not IS_CUDA_AVAILABLE, reason='requires CUDA support')),
-        pytest.param(
-            'mlu',
-            marks=pytest.mark.skipif(
-                not IS_MLU_AVAILABLE, reason='requires MLU support')),
     ])
     def test_mdconv_double(self, device):
         self._test_mdconv(dtype=torch.double, device=device)
