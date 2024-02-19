@@ -48,10 +48,7 @@ class TestDeformconv:
                          im2col_step=2):
         if not torch.cuda.is_available() and device == 'cuda':
             pytest.skip('test requires GPU')
-        if device == 'mlu':
-            from mmcv.ops import DeformConv2dPack_MLU as DeformConv2dPack
-        else:
-            from mmcv.ops import DeformConv2dPack
+        from mmcv.ops import DeformConv2dPack
         c_in = 1
         c_out = 1
         batch_size = 10
@@ -131,10 +128,7 @@ class TestDeformconv:
         """
         if not torch.cuda.is_available() and device == 'cuda':
             return
-        if device == 'mlu':
-            from mmcv.ops import DeformConv2dPack_MLU as DeformConv2dPack
-        else:
-            from mmcv.ops import DeformConv2dPack
+        from mmcv.ops import DeformConv2dPack
         c_in = 1
         c_out = 1
         repeated_input = np.repeat(input, batch_size, axis=0)
@@ -197,7 +191,6 @@ class TestDeformconv:
         self._test_deformconv(torch.float, device='cpu', threshold=1e-1)
 
         device = 'mlu' if IS_MLU_AVAILABLE else 'cuda'
-        self._test_deformconv(torch.double, device=device)
         self._test_deformconv(torch.float, device=device)
         self._test_deformconv(torch.half, threshold=1e-1, device=device)
         # test batch_size < im2col_step

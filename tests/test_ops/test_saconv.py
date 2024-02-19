@@ -4,6 +4,7 @@ import torch.nn as nn
 
 from mmcv.ops import SAConv2d
 
+from mmcv.utils import IS_MLU_AVAILABLE
 
 def test_sacconv():
     # test with normal cast
@@ -29,6 +30,14 @@ def test_sacconv():
             3, 5, kernel_size=3, padding=1, use_deform=True).cuda()
         deform_sac_out = deform_saconv(x).cuda()
         refer_conv = nn.Conv2d(3, 5, kernel_size=3, padding=1).cuda()
+        refer_out = refer_conv(x)
+        assert deform_sac_out.shape == refer_out.shape
+    elif IS_MLU_AVAILABLE:
+        x = torch.rand(1, 3, 256, 256).mlu()
+        deform_saconv = SAConv2d(
+            3, 5, kernel_size=3, padding=1, use_deform=True).mlu()
+        deform_sac_out = deform_saconv(x).mlu()
+        refer_conv = nn.Conv2d(3, 5, kernel_size=3, padding=1).mlu()
         refer_out = refer_conv(x)
         assert deform_sac_out.shape == refer_out.shape
     else:

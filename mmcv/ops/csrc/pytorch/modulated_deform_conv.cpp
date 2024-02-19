@@ -2,6 +2,29 @@
 #include "pytorch_cpp_helper.hpp"
 #include "pytorch_device_registry.hpp"
 
+void modulated_deform_conv_forward_impl(
+    Tensor input, Tensor weight, Tensor bias, Tensor ones, Tensor offset, Tensor mask,
+    Tensor output, Tensor columns, int kernel_h, int kernel_w, const int stride_h,
+    const int stride_w, const int pad_h, const int pad_w, const int dilation_h,
+    const int dilation_w, const int group, const int deformable_group, const bool with_bias) {
+
+  DISPATCH_DEVICE_IMPL(modulated_deform_conv_forward_impl, input, weight, bias, ones,
+		       offset, mask, output, columns, kernel_h, kernel_w, stride_h, stride_w,
+		       pad_h, pad_w, dilation_h, dilation_w, group, deformable_group, with_bias);
+}
+
+void modulated_deform_conv_backward_impl(
+    Tensor input, Tensor weight, Tensor bias, Tensor ones, Tensor offset, Tensor mask,
+    Tensor columns, Tensor grad_input, Tensor grad_weight, Tensor grad_bias, Tensor grad_offset,
+    Tensor grad_mask, Tensor grad_output, int kernel_h, int kernel_w, int stride_h, int stride_w,
+    int pad_h,  int pad_w, int dilation_h, int dilation_w, int group, int deformable_group,
+    const bool with_bias) {
+  DISPATCH_DEVICE_IMPL(modulated_deform_conv_backward_impl, input, weight, bias, ones,
+		       offset, mask, columns, grad_input, grad_weight, grad_bias, grad_offset,
+		       grad_mask, grad_output, kernel_h, kernel_w, stride_h, stride_w, pad_h,
+		       pad_w, dilation_h, dilation_w, group, deformable_group, with_bias); 
+}
+
 void modulated_deformable_im2col_impl(
     const Tensor data_im, const Tensor data_offset, const Tensor data_mask,
     const int batch_size, const int channels, const int height_im,
@@ -52,6 +75,17 @@ void modulated_deform_conv_forward(
     const int dilation_h, const int dilation_w, const int group,
     const int deformable_group, const bool with_bias) {
   at::DeviceGuard guard(input.device());
+  
+#ifdef MMCV_WITH_MLU_KPRIVATE
+  if (input.device().is_privateuseone()) {
+#else
+  if (input.device().is_mlu()) {
+#endif
+    modulated_deform_conv_forward_impl(input, weight, bias, ones, offset,
+	mask, output, columns, kernel_h, kernel_w, stride_h, stride_w, pad_h,
+	pad_w, dilation_h, dilation_w, group, deformable_group, with_bias);
+    return;
+  }
 
   const int batch = input.size(0);
   const int channels = input.size(1);
@@ -131,6 +165,18 @@ void modulated_deform_conv_backward(
     int pad_w, int dilation_h, int dilation_w, int group, int deformable_group,
     const bool with_bias) {
   at::DeviceGuard guard(input.device());
+
+#ifdef MMCV_WITH_MLU_KPRIVATE
+  if (input.device().is_privateuseone()) {
+#else
+  if (input.device().is_mlu()) {
+#endif
+    modulated_deform_conv_backward_impl(input, weight, bias, ones,
+        offset, mask, columns, grad_input, grad_weight, grad_bias, grad_offset,
+        grad_mask, grad_output, kernel_h, kernel_w, stride_h, stride_w, pad_h,
+        pad_w, dilation_h, dilation_w, group, deformable_group, with_bias);
+    return;
+  }
 
   const int batch = input.size(0);
   const int channels = input.size(1);

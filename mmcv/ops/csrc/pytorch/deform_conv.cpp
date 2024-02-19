@@ -2,6 +2,40 @@
 #include "pytorch_cpp_helper.hpp"
 #include "pytorch_device_registry.hpp"
 
+void deform_conv_forward_impl(Tensor input, Tensor weight, Tensor offset,
+		              Tensor output, Tensor columns, Tensor ones, int kW,
+                              int kH, int dW, int dH, int padW, int padH,
+                              int dilationW, int dilationH, int group,
+                              int deformable_group, int im2col_step) {
+  DISPATCH_DEVICE_IMPL(deform_conv_forward_impl, input, weight, offset, output,
+		       columns, ones, kW, kH, dW, dH, padW, padH,
+		       dilationW, dilationH, group, deformable_group,
+		       im2col_step);
+}
+
+void deform_conv_backward_input_impl(Tensor input, Tensor offset, Tensor gradOutput,
+		                     Tensor gradInput, Tensor gradOffset,
+				     Tensor weight, Tensor columns, int kW, int kH,
+				     int dW, int dH, int padW, int padH,
+				     int dilationW, int dilationH, int group,
+				     int deformable_group, int im2col_step) {
+  DISPATCH_DEVICE_IMPL(deform_conv_backward_input_impl, input, offset, gradOutput,
+		       gradInput, gradOffset, weight, columns, kW, kH, dW, dH,
+		       padW, padH, dilationW, dilationH, group, deformable_group,
+		       im2col_step);
+}
+
+void deform_conv_backward_parameters_impl(Tensor input, Tensor offset, Tensor gradOutput,
+		                          Tensor gradWeight, Tensor columns, Tensor ones,
+					  int kW, int kH, int dW, int dH, int padW,
+					  int padH, int dilationW, int dilationH,
+					  int group, int deformable_group,
+					  float scale, int im2col_step) {
+  DISPATCH_DEVICE_IMPL(deform_conv_backward_parameters_impl, input, offset, gradOutput,
+		       gradWeight, columns, ones, kW, kH, dW, dH, padW, padH, dilationW,
+		       dilationH, group, deformable_group, scale, im2col_step);
+}
+
 void deformable_im2col_impl(Tensor data_im, Tensor data_offset,
                             const int channels, const int height,
                             const int width, const int ksize_h,
@@ -153,6 +187,15 @@ void deform_conv_forward(Tensor input, Tensor weight, Tensor offset,
 #else
     AT_ERROR("DeformConv is not compiled with GPU support");
 #endif
+#ifdef MMCV_WITH_MLU_KPRIVATE 
+  } else if (input.device().is_privateuseone()) {
+#else
+  } else if (input.device().is_mlu()) {
+#endif
+    deform_conv_forward_impl(input, weight, offset, output, columns, ones, kW,
+		             kH, dW, dH, padW, padH, dilationW, dilationH, group,
+			     deformable_group, im2col_step);
+    return;
   } else {
     CHECK_CPU_INPUT(input);
     CHECK_CPU_INPUT(offset);
@@ -275,6 +318,17 @@ void deform_conv_backward_input(Tensor input, Tensor offset, Tensor gradOutput,
 #else
     AT_ERROR("DeformConv is not compiled with GPU support");
 #endif
+#ifdef MMCV_WITH_MLU_KPRIVATE 
+  } else if (input.device().is_privateuseone()) {
+#else
+  } else if (input.device().is_mlu()) {
+#endif
+    deform_conv_backward_input_impl(input, offset, gradOutput, gradInput,
+		                    gradOffset, weight, columns, kW, kH,
+				    dW, dH, padW, padH, dilationW,
+				    dilationH, group, deformable_group,
+				    im2col_step);
+    return;
   } else {
     CHECK_CPU_INPUT(input);
     CHECK_CPU_INPUT(offset);
@@ -407,6 +461,17 @@ void deform_conv_backward_parameters(Tensor input, Tensor offset,
 #else
     AT_ERROR("DeformConv is not compiled with GPU support");
 #endif
+#ifdef MMCV_WITH_MLU_KPRIVATE 
+  } else if (input.device().is_privateuseone()) {
+#else
+  } else if (input.device().is_mlu()) {
+#endif
+    deform_conv_backward_parameters_impl(input, offset, gradOutput,
+		                         gradWeight, columns, ones, kW, kH,
+				         dW, dH, padW, padH, dilationW,
+				         dilationH, group, deformable_group,
+				         scale, im2col_step);
+    return;
   } else {
     CHECK_CPU_INPUT(input);
     CHECK_CPU_INPUT(offset);
