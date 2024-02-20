@@ -20,11 +20,11 @@ cnpipe {
         docker_image = this.DOCKER_IMAGE
     }
     // 运行单元测试
-    task('run_unit_test_catch_1.13', unit_test(docker_image_113))
-    task('run_unit_test_catch_2.1', unit_test(docker_image_210))
+    task('run_unit_test_catch_1.13', unit_test(docker_image_113, 'run_unit_test_catch_1.13'))
+    task('run_unit_test_catch_2.1', unit_test(docker_image_210, 'run_unit_test_catch_2.1'))
 }
 
-def unit_test(docker_image) {
+def unit_test(docker_image, task_name) {
     return {
         stage 'test_mmcv_ops'
         timeout 120
@@ -60,6 +60,7 @@ def unit_test(docker_image) {
             }
         }
         unstash 'mmcv'
+        envVariable 'TASK_NAME',task_name
         script '''
             set -e
             set -x
@@ -68,7 +69,11 @@ def unit_test(docker_image) {
                 pip install -r requirements.txt
                 pip install opencv-python==4.8.1.78
                 MMCV_WITH_OPS=1 python setup.py install
-                pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --log-file=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml
+                REPORT_OPT="--reportportal --rp-launch=${JOB_NAME}/${BUILD_ID}/${TASK_NAME}"
+                if [ -n "${RP_PROJECT}"  ]; then
+                    REPORT_OPT="${REPORT_OPT} -o rp_project=${RP_PROJECT}"
+                fi
+                pytest -s tests/test_ops tests/test_mlu_ops --disable-warnings --log-file=${CI_WORK_DIR}/test_log/test_ops_log.txt --junitxml=${CI_WORK_DIR}/test_result/test_mmcv_unit_test.xml ${REPORT_OPT}
             popd
             mkdir dmesg_log
             RESULT=$?
