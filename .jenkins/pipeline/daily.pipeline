@@ -39,7 +39,7 @@ def unit_test(docker_image, task_name) {
                 runArgs '--shm-size 64G --network=host --privileged --device /dev/cambricon_dev0 --device /dev/cambricon_ctl -v /usr/bin/cnmon:/usr/bin/cnmon'
             }
         } else {
-            // 云平台
+            // 测试云
             node {
                 cardType this.CARD_TYPE.split(',')
                 drvVer this.DRIVER_VERSION
@@ -57,6 +57,17 @@ def unit_test(docker_image, task_name) {
                 reqEphemeralStorage '96Gi'
                 lmtEphemeralStorage '96Gi'
                 modifyShm true
+            }
+            if (this.CARD_TYPE.contains("MLU3")) {
+                // 算力云
+                agent2 {
+                    container {
+                        image docker_image
+                    }
+                    node {
+                        caipFlavor "1*MLU370-X9-public"
+                    }
+                }
             }
         }
         unstash 'mmcv'
