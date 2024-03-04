@@ -2,4 +2,3 @@
 -r requirements/optional.txt
 -r requirements/runtime.txt
 -r requirements/test.txt
--r requirements/reportportal.txt

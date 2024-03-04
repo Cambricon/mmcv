@@ -1,3 +1,0 @@
-pytest>=7.4.1
-pytest-reportportal>=5.3.1
-reportportal-client~=5.5.4
