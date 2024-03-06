@@ -45,7 +45,7 @@ def get_version():
 def get_mlu_version():
     if not (hasattr(torch, 'is_mlu_available') and torch.is_mlu_available()):
         return "", ""
-    version_file = 'packaging/scripts/build.property'
+    version_file = './build.property'
     import json
     # Read the content of the file
     with open(version_file, 'r') as file:
