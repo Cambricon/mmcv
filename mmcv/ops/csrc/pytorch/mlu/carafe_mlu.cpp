@@ -62,11 +62,11 @@ void CARAFEForwardMLUKernelLauncher(const Tensor input, const Tensor mask,
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(rinput_);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto mask_impl = torch_mlu::getMluTensorImpl(rmask_);
-  auto mask_ptr = mask_impl->cnnlMalloc();
+  auto mask_ptr = torch_mlu::mlu_data_ptr(mask_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(routput_);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // set op descriptor
   auto handle = mluOpGetCurrentHandle();
@@ -146,15 +146,15 @@ void CARAFEBackwardMLUKernelLauncher(
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(rinput_);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto mask_impl = torch_mlu::getMluTensorImpl(rmask_);
-  auto mask_ptr = mask_impl->cnnlMalloc();
+  auto mask_ptr = torch_mlu::mlu_data_ptr(mask_impl);
   auto grad_output_impl = torch_mlu::getMluTensorImpl(rgrad_output_);
-  auto grad_output_ptr = grad_output_impl->cnnlMalloc();
+  auto grad_output_ptr = torch_mlu::mlu_data_ptr(grad_output_impl);
   auto grad_input_impl = torch_mlu::getMluTensorImpl(rgrad_input_);
-  auto grad_input_ptr = grad_input_impl->cnnlMalloc();
+  auto grad_input_ptr = torch_mlu::mlu_data_ptr(grad_input_impl);
   auto grad_mask_impl = torch_mlu::getMluTensorImpl(rgrad_mask_);
-  auto grad_mask_ptr = grad_mask_impl->cnnlMalloc();
+  auto grad_mask_ptr = torch_mlu::mlu_data_ptr(grad_mask_impl);
 
   // set op descriptor
   auto handle = mluOpGetCurrentHandle();

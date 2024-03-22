@@ -46,9 +46,9 @@ void TINShiftForwardMLUKernelLauncher(Tensor input, Tensor shift,
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
 
   // get the mlu ptr
-  auto input_ptr = input_impl->cnnlMalloc();
-  auto shift_ptr = shift_impl->cnnlMalloc();
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
+  auto shift_ptr = torch_mlu::mlu_data_ptr(shift_impl);
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // set tensor descriptor
   MluOpTensorDescriptor input_desc, shift_desc, output_desc;
@@ -102,9 +102,9 @@ void TINShiftBackwardMLUKernelLauncher(Tensor grad_output, Tensor shift,
   auto grad_input_impl = torch_mlu::getMluTensorImpl(grad_input_contiguous);
 
   // get the mlu ptr
-  auto grad_output_ptr = grad_output_impl->cnnlMalloc();
-  auto shift_ptr = shift_impl->cnnlMalloc();
-  auto grad_input_ptr = grad_input_impl->cnnlMalloc();
+  auto grad_output_ptr = torch_mlu::mlu_data_ptr(grad_output_impl);
+  auto shift_ptr = torch_mlu::mlu_data_ptr(shift_impl);
+  auto grad_input_ptr = torch_mlu::mlu_data_ptr(grad_input_impl);
 
   // set tensor descriptor
   MluOpTensorDescriptor grad_output_desc, shift_desc, grad_input_desc;

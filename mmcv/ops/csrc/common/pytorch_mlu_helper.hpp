@@ -13,9 +13,6 @@
 #define PYTORCH_MLU_HELPER_HPP_
 
 #ifdef MMCV_WITH_MLU
-#ifdef MMCV_WITH_TORCH19
-#include "aten.h"
-#else
 #include "utils/cnlog.h"
 #include "utils/assert_tensor.h"
 #include "framework/core/device.h"
@@ -25,7 +22,6 @@
 #include "aten/utils/types.h"
 #include "utils/cndumper.h"
 #include "c10/core/ScalarTypeToTypeMeta.h"
-#endif // MMCV_WITH_TORCH19
 
 #define NFU_ALIGN_SIZE 128
 

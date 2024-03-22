@@ -4,6 +4,8 @@ import json
 
 if '2.1' in torch.__version__:
     from torch.testing._internal.common_dtype import floating_types_and, integral_types, complex_types
+elif '2.3' in torch.__version__ or '2.4' in torch.__version__:
+    from torch.testing._internal.opinfo.utils import floating_types_and, integral_types, complex_types
 else:
     from torch.testing import floating_types_and, integral_types, complex_types
 

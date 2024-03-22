@@ -29,9 +29,9 @@ void ball_query_forward_mlu(int b, int n, int m, float min_radius,
   auto new_xyz_impl = torch_mlu::getMluTensorImpl(new_xyz_contiguous);
   auto xyz_impl = torch_mlu::getMluTensorImpl(xyz_contiguous);
   auto idx_impl = torch_mlu::getMluTensorImpl(idx_contiguous);
-  auto new_xyz_ptr = new_xyz_impl->cnnlMalloc();
-  auto xyz_ptr = xyz_impl->cnnlMalloc();
-  auto idx_ptr = idx_impl->cnnlMalloc();
+  auto new_xyz_ptr = torch_mlu::mlu_data_ptr(new_xyz_impl);
+  auto xyz_ptr = torch_mlu::mlu_data_ptr(xyz_impl);
+  auto idx_ptr = torch_mlu::mlu_data_ptr(idx_impl);
 
   auto handle = mluOpGetCurrentHandle();
   TORCH_MLUOP_CHECK(mluOpBallQuery(

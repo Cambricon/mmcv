@@ -119,11 +119,11 @@ std::vector<torch::Tensor> GetIndicePairsForwardMLUKernelLauncher(
   auto indice_workspace_impl =
       torch_mlu::getMluTensorImpl(indice_workspace_size);
 
-  auto indices_ptr = indices_impl->cnnlMalloc();
-  auto out_indices_ptr = out_indices_impl->cnnlMalloc();
-  auto indicePairs_ptr = indicePairs_impl->cnnlMalloc();
-  auto indiceNum_ptr = indiceNum_impl->cnnlMalloc();
-  auto indice_workspace_ptr = indice_workspace_impl->cnnlMalloc();
+  auto indices_ptr = torch_mlu::mlu_data_ptr(indices_impl);
+  auto out_indices_ptr = torch_mlu::mlu_data_ptr(out_indices_impl);
+  auto indicePairs_ptr = torch_mlu::mlu_data_ptr(indicePairs_impl);
+  auto indiceNum_ptr = torch_mlu::mlu_data_ptr(indiceNum_impl);
+  auto indice_workspace_ptr = torch_mlu::mlu_data_ptr(indice_workspace_impl);
 
   TORCH_MLUOP_CHECK(mluOpGetIndicePairs(
       handle, sparse_conv_desc, indices_desc.desc(), indices_ptr,
@@ -217,14 +217,14 @@ torch::Tensor IndiceConvForwardMLUKernelLauncher(
   auto indice_pairs_impl = torch_mlu::getMluTensorImpl(indice_pairs_contiguous);
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
 
-  auto features_ptr = features_impl->cnnlMalloc();
-  auto filters_ptr = filters_impl->cnnlMalloc();
-  auto indice_pairs_ptr = indice_pairs_impl->cnnlMalloc();
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto features_ptr = torch_mlu::mlu_data_ptr(features_impl);
+  auto filters_ptr = torch_mlu::mlu_data_ptr(filters_impl);
+  auto indice_pairs_ptr = torch_mlu::mlu_data_ptr(indice_pairs_impl);
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   //  outputs
   auto output_impl = torch_mlu::getMluTensorImpl(output);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
   TORCH_MLUOP_CHECK(mluOpIndiceConvolutionForward(
       handle, features_desc.desc(), features_ptr, filters_desc.desc(),
       filters_ptr, indice_pairs_desc.desc(), indice_pairs_ptr, indice_num,
@@ -354,20 +354,20 @@ std::vector<torch::Tensor> IndiceConvBackwardMLUKernelLauncher(
   auto indice_convbpfilter_workspace_impl =
       torch_mlu::getMluTensorImpl(indice_convbpfilter_workspace);
 
-  auto features_ptr = features_impl->cnnlMalloc();
-  auto filters_ptr = filters_impl->cnnlMalloc();
-  auto output_grad_ptr = output_grad_impl->cnnlMalloc();
-  auto indice_pairs_ptr = indice_pairs_impl->cnnlMalloc();
+  auto features_ptr = torch_mlu::mlu_data_ptr(features_impl);
+  auto filters_ptr = torch_mlu::mlu_data_ptr(filters_impl);
+  auto output_grad_ptr = torch_mlu::mlu_data_ptr(output_grad_impl);
+  auto indice_pairs_ptr = torch_mlu::mlu_data_ptr(indice_pairs_impl);
   auto indice_convbpdata_workspace_ptr =
-      indice_convbpdata_workspace_impl->cnnlMalloc();
+      torch_mlu::mlu_data_ptr(indice_convbpdata_workspace_impl);
   auto indice_convbpfilter_workspace_ptr =
-      indice_convbpfilter_workspace_impl->cnnlMalloc();
+      torch_mlu::mlu_data_ptr(indice_convbpfilter_workspace_impl);
 
   // outputs
   auto input_grad_impl = torch_mlu::getMluTensorImpl(input_grad);
-  auto input_grad_ptr = input_grad_impl->cnnlMalloc();
+  auto input_grad_ptr = torch_mlu::mlu_data_ptr(input_grad_impl);
   auto filters_grad_impl = torch_mlu::getMluTensorImpl(filters_grad);
-  auto filters_grad_ptr = filters_grad_impl->cnnlMalloc();
+  auto filters_grad_ptr = torch_mlu::mlu_data_ptr(filters_grad_impl);
 
   TORCH_MLUOP_CHECK(mluOpIndiceConvolutionBackwardData(
       handle, output_grad_desc.desc(), output_grad_ptr, filters_desc.desc(),

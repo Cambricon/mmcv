@@ -22,7 +22,7 @@
   MluOpTensorDescriptor NAME##_desc;                                \
   NAME##_desc.set(NAME##_contigous);                                \
   auto NAME##_impl = torch_mlu::getMluTensorImpl(NAME##_contigous); \
-  auto NAME##_ptr = NAME##_impl->cnnlMalloc();
+  auto NAME##_ptr = torch_mlu::mlu_data_ptr(NAME##_impl);
 
 int HardVoxelizeForwardMLUKernelLauncher(
     const at::Tensor &points, at::Tensor &voxels, at::Tensor &coors,

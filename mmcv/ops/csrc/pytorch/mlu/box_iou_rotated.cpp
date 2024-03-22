@@ -33,9 +33,9 @@ void BoxIouRotatedMLUKernelLauncher(const Tensor boxes1, const Tensor boxes2,
   auto boxes2_impl = torch_mlu::getMluTensorImpl(boxes2_contiguous);
   auto ious_impl = torch_mlu::getMluTensorImpl(ious_contiguous);
 
-  auto boxes1_ptr = boxes1_impl->cnnlMalloc();
-  auto boxes2_ptr = boxes2_impl->cnnlMalloc();
-  auto ious_ptr = ious_impl->cnnlMalloc();
+  auto boxes1_ptr = torch_mlu::mlu_data_ptr(boxes1_impl);
+  auto boxes2_ptr = torch_mlu::mlu_data_ptr(boxes2_impl);
+  auto ious_ptr = torch_mlu::mlu_data_ptr(ious_impl);
 
   CNLOG(INFO) << "Call mluOpBoxIouRotated().";
   TORCH_MLUOP_CHECK(mluOpBoxIouRotated(

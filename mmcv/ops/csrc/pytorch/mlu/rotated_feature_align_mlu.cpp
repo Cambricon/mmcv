@@ -32,11 +32,11 @@ void RotatedFeatureAlignForwardMLUKernelLauncher(const Tensor features,
 
   // get ptr of tensors
   auto features_impl = torch_mlu::getMluTensorImpl(features_);
-  auto features_ptr = features_impl->cnnlMalloc();
+  auto features_ptr = torch_mlu::mlu_data_ptr(features_impl);
   auto best_bboxes_impl = torch_mlu::getMluTensorImpl(best_bboxes_contiguous);
-  auto best_bboxes_ptr = best_bboxes_impl->cnnlMalloc();
+  auto best_bboxes_ptr = torch_mlu::mlu_data_ptr(best_bboxes_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // get compute handle
   auto handle = mluOpGetCurrentHandle();
@@ -63,11 +63,11 @@ void RotatedFeatureAlignBackwardMLUKernelLauncher(const Tensor top_grad,
 
   // get ptr of tensors
   auto top_grad_impl = torch_mlu::getMluTensorImpl(top_grad_);
-  auto top_grad_ptr = top_grad_impl->cnnlMalloc();
+  auto top_grad_ptr = torch_mlu::mlu_data_ptr(top_grad_impl);
   auto best_bboxes_impl = torch_mlu::getMluTensorImpl(best_bboxes_contiguous);
-  auto best_bboxes_ptr = best_bboxes_impl->cnnlMalloc();
+  auto best_bboxes_ptr = torch_mlu::mlu_data_ptr(best_bboxes_impl);
   auto bottom_grad_impl = torch_mlu::getMluTensorImpl(bottom_grad_);
-  auto bottom_grad_ptr = bottom_grad_impl->cnnlMalloc();
+  auto bottom_grad_ptr = torch_mlu::mlu_data_ptr(bottom_grad_impl);
 
   MluOpTensorDescriptor top_grad_desc, best_bboxes_desc, bottom_grad_desc;
   top_grad_desc.set_with_layout(top_grad_, MLUOP_LAYOUT_NHWC);

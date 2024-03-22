@@ -43,9 +43,9 @@ void ROIAlignForwardMLUKernelLauncher(Tensor input, Tensor rois, Tensor output,
   output_desc.set_with_layout(output_contiguous, MLUOP_LAYOUT_NHWC);
 
   // get the mlu ptr
-  auto self_ptr = self_impl->cnnlMalloc();
-  auto rois_ptr = rois_impl->cnnlMalloc();
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto self_ptr = torch_mlu::mlu_data_ptr(self_impl);
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   mluOpRoiAlignForwardDescriptor_t roialign_desc;
   TORCH_MLUOP_CHECK(mluOpCreateRoiAlignForwardDescriptor(&roialign_desc));
@@ -61,8 +61,8 @@ void ROIAlignForwardMLUKernelLauncher(Tensor input, Tensor rois, Tensor output,
         torch_mlu::cnnl::ops::cnnl_contiguous(argmax_x, memory_format);
     auto argmax_x_impl = torch_mlu::getMluTensorImpl(argmax_x_contiguous);
     auto argmax_y_impl = torch_mlu::getMluTensorImpl(argmax_y_contiguous);
-    auto argmax_x_ptr = argmax_x_impl->cnnlMalloc();
-    auto argmax_y_ptr = argmax_y_impl->cnnlMalloc();
+    auto argmax_x_ptr = torch_mlu::mlu_data_ptr(argmax_x_impl);
+    auto argmax_y_ptr = torch_mlu::mlu_data_ptr(argmax_y_impl);
     argmax_y_desc.set_with_layout(argmax_x_contiguous, MLUOP_LAYOUT_NHWC);
     argmax_x_desc.set_with_layout(argmax_x_contiguous, MLUOP_LAYOUT_NHWC);
     TORCH_MLUOP_CHECK(mluOpRoiAlignForward_v2(
@@ -114,9 +114,9 @@ void ROIAlignBackwardMLUKernelLauncher(Tensor grad, Tensor rois,
   auto rois_impl = torch_mlu::getMluTensorImpl(rois);
 
   // get the mlu ptr
-  auto grad_ptr = grad_impl->cnnlMalloc();
-  auto rois_ptr = rois_impl->cnnlMalloc();
-  auto grad_input_ptr = grad_input_impl->cnnlMalloc();
+  auto grad_ptr = torch_mlu::mlu_data_ptr(grad_impl);
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
+  auto grad_input_ptr = torch_mlu::mlu_data_ptr(grad_input_impl);
 
   MluOpTensorDescriptor grads_desc, rois_desc, argmax_y_desc, argmax_x_desc,
       grad_input_desc;
@@ -132,8 +132,8 @@ void ROIAlignBackwardMLUKernelLauncher(Tensor grad, Tensor rois,
         torch_mlu::cnnl::ops::cnnl_contiguous(argmax_x, memory_format);
     auto argmax_x_impl = torch_mlu::getMluTensorImpl(argmax_x_contiguous);
     auto argmax_y_impl = torch_mlu::getMluTensorImpl(argmax_y_contiguous);
-    auto argmax_x_ptr = argmax_x_impl->cnnlMalloc();
-    auto argmax_y_ptr = argmax_y_impl->cnnlMalloc();
+    auto argmax_x_ptr = torch_mlu::mlu_data_ptr(argmax_x_impl);
+    auto argmax_y_ptr = torch_mlu::mlu_data_ptr(argmax_y_impl);
     argmax_y_desc.set_with_layout(argmax_x_contiguous, MLUOP_LAYOUT_NHWC);
     argmax_x_desc.set_with_layout(argmax_x_contiguous, MLUOP_LAYOUT_NHWC);
     TORCH_MLUOP_CHECK(mluOpRoiAlignBackward_v2(

@@ -52,12 +52,13 @@ def get_mlu_version():
         data = json.load(file)
     version_value = data['version']
     mluops_version = data['build_requires']['mluops']
-    if '1.9' in torch.__version__:
-        pt_version = "pt19"
-    elif '1.13' in torch.__version__:
-        pt_version = "pt113"
-    elif '2.1' in torch.__version__:
-        pt_version = "pt21"
+    torch_version = torch.__version__
+    match = re.match(r'(\d+\.\d+\.\d+)', torch_version)
+    local_torch_version = match.group(1)
+    def convert_to_pt_version(version_string):
+        major, minor, patch = version_string.split('.')
+        return f"pt{major}{minor}"
+    pt_version = convert_to_pt_version(local_torch_version) 
     mlu_unique_version = "+" + version_value + "+" + pt_version
     return mluops_version[0], mlu_unique_version
 
@@ -341,10 +342,13 @@ def get_extensions():
                         exit()
 
             define_macros += [('MMCV_WITH_MLU', None)]
-            if parse_version(torch.__version__) > parse_version('2.0.0'):
+            torch_version = torch.__version__
+            match = re.match(r'(\d+\.\d+\.\d+)', torch_version)
+            local_torch_version = match.group(1)
+            if parse_version(local_torch_version) > parse_version('2.0.0'):
                 define_macros += [('MMCV_WITH_MLU_KPRIVATE', None)]
-            if '1.9' in torch.__version__:
-                define_macros += [('MMCV_WITH_TORCH19', None)]
+            if parse_version(local_torch_version) < parse_version('2.3.0'):
+                define_macros += [('MMCV_WITH_TORCH_OLD', None)]
             mlu_args = os.getenv('MMCV_MLU_ARGS', '-DNDEBUG ')
             mluops_includes = []
             mluops_includes.append(
