@@ -32,11 +32,11 @@ void ROIAlignRotatedForwardMLUKernelLauncher(Tensor input, Tensor rois,
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto rois_impl = torch_mlu::getMluTensorImpl(rois_contiguous);
-  auto rois_ptr = rois_impl->cnnlMalloc();
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // get compute handle
   auto handle = mluOpGetCurrentHandle();
@@ -63,11 +63,11 @@ void ROIAlignRotatedBackwardMLUKernelLauncher(
 
   // get ptr of tensors
   auto top_grad_impl = torch_mlu::getMluTensorImpl(top_grad_);
-  auto top_grad_ptr = top_grad_impl->cnnlMalloc();
+  auto top_grad_ptr = torch_mlu::mlu_data_ptr(top_grad_impl);
   auto rois_impl = torch_mlu::getMluTensorImpl(rois_contiguous);
-  auto rois_ptr = rois_impl->cnnlMalloc();
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
   auto bottom_grad_impl = torch_mlu::getMluTensorImpl(bottom_grad_);
-  auto bottom_grad_ptr = bottom_grad_impl->cnnlMalloc();
+  auto bottom_grad_ptr = torch_mlu::mlu_data_ptr(bottom_grad_impl);
 
   MluOpTensorDescriptor top_grad_desc, rois_desc, bottom_grad_desc;
   top_grad_desc.set_with_layout(top_grad_, MLUOP_LAYOUT_NHWC);

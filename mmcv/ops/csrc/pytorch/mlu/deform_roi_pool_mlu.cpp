@@ -37,16 +37,16 @@ void DeformRoIPoolForwardMLUKernelLauncher(Tensor input, Tensor rois,
     offset_desc.set(offset_contiguous);
     offset_real_desc = offset_desc.desc();
     auto offset_impl = torch_mlu::getMluTensorImpl(offset_contiguous);
-    offset_ptr = offset_impl->cnnlMalloc();
+    offset_ptr = torch_mlu::mlu_data_ptr(offset_impl);
   }
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto rois_impl = torch_mlu::getMluTensorImpl(rois_contiguous);
-  auto rois_ptr = rois_impl->cnnlMalloc();
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // get compute handle
   auto handle = mluOpGetCurrentHandle();
@@ -76,13 +76,13 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
 
   // get ptr of tensors
   auto grad_output_impl = torch_mlu::getMluTensorImpl(grad_output_);
-  auto grad_output_ptr = grad_output_impl->cnnlMalloc();
+  auto grad_output_ptr = torch_mlu::mlu_data_ptr(grad_output_impl);
   auto input_impl = torch_mlu::getMluTensorImpl(input_);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto rois_impl = torch_mlu::getMluTensorImpl(rois_contiguous);
-  auto rois_ptr = rois_impl->cnnlMalloc();
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
   auto grad_input_impl = torch_mlu::getMluTensorImpl(grad_input_);
-  auto grad_input_ptr = grad_input_impl->cnnlMalloc();
+  auto grad_input_ptr = torch_mlu::mlu_data_ptr(grad_input_impl);
 
   MluOpTensorDescriptor grad_output_desc, input_desc, rois_desc, offset_desc,
       grad_input_desc, grad_offset_desc;
@@ -98,7 +98,7 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
     offset_desc.set(offset_contiguous);
     offset_real_desc = offset_desc.desc();
     auto offset_impl = torch_mlu::getMluTensorImpl(offset_contiguous);
-    offset_ptr = offset_impl->cnnlMalloc();
+    offset_ptr = torch_mlu::mlu_data_ptr(offset_impl);
   }
   mluOpTensorDescriptor_t grad_offset_real_desc = NULL;
   void *grad_offset_ptr = NULL;
@@ -108,7 +108,7 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
     grad_offset_desc.set(grad_offset_contiguous);
     grad_offset_real_desc = grad_offset_desc.desc();
     auto grad_offset_impl = torch_mlu::getMluTensorImpl(grad_offset_contiguous);
-    grad_offset_ptr = grad_offset_impl->cnnlMalloc();
+    grad_offset_ptr = torch_mlu::mlu_data_ptr(grad_offset_impl);
   }
 
   // get compute handle

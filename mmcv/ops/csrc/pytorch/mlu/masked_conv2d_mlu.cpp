@@ -67,13 +67,13 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
   
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
-  auto im_ptr = im_impl->cnnlMalloc();
+  auto im_ptr = torch_mlu::mlu_data_ptr(im_impl);
   auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx_cast);
-  auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
+  auto mask_h_idx_ptr = torch_mlu::mlu_data_ptr(mask_h_idx_impl);
   auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx_cast);
-  auto mask_w_idx_ptr = mask_w_idx_impl->cnnlMalloc();
+  auto mask_w_idx_ptr = torch_mlu::mlu_data_ptr(mask_w_idx_impl);
   auto col_impl = torch_mlu::getMluTensorImpl(col);
-  auto col_ptr = col_impl->cnnlMalloc();
+  auto col_ptr = torch_mlu::mlu_data_ptr(col_impl);
 
   // set descriptors
   MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
@@ -93,7 +93,7 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
 
   auto workspace = at::empty(workspace_size, im.options().dtype(at::kByte));
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   // launch kernel
   TORCH_MLUOP_CHECK(mluOpMaskedIm2colForward(
@@ -154,13 +154,13 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
 
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
-  auto im_ptr = im_impl->cnnlMalloc();
+  auto im_ptr = torch_mlu::mlu_data_ptr(im_impl);
   auto mask_h_idx_impl = torch_mlu::getMluTensorImpl(mask_h_idx_cast);
-  auto mask_h_idx_ptr = mask_h_idx_impl->cnnlMalloc();
+  auto mask_h_idx_ptr = torch_mlu::mlu_data_ptr(mask_h_idx_impl);
   auto mask_w_idx_impl = torch_mlu::getMluTensorImpl(mask_w_idx_cast);
-  auto mask_w_idx_ptr = mask_w_idx_impl->cnnlMalloc();
+  auto mask_w_idx_ptr = torch_mlu::mlu_data_ptr(mask_w_idx_impl);
   auto col_impl = torch_mlu::getMluTensorImpl(col_contiguous);
-  auto col_ptr = col_impl->cnnlMalloc();
+  auto col_ptr = torch_mlu::mlu_data_ptr(col_impl);
 
   // set descriptors
   MluOpTensorDescriptor im_desc, col_desc, mask_h_idx_desc, mask_w_idx_desc;
@@ -180,7 +180,7 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
 
   auto workspace = at::empty(workspace_size, im.options().dtype(at::kByte));
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   // launch kernel
   TORCH_MLUOP_CHECK(mluOpMaskedCol2imForward(

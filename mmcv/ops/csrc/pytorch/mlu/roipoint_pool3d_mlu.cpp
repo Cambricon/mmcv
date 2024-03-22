@@ -87,17 +87,17 @@ void RoIPointPool3dForwardMLUKernelLauncher(
 
   // get ptr of tensors
   auto xyz_impl = torch_mlu::getMluTensorImpl(xyz_contiguous);
-  auto xyz_ptr = xyz_impl->cnnlMalloc();
+  auto xyz_ptr = torch_mlu::mlu_data_ptr(xyz_impl);
   auto pts_feature_impl = torch_mlu::getMluTensorImpl(pts_feature_contiguous);
-  auto pts_feature_ptr = pts_feature_impl->cnnlMalloc();
+  auto pts_feature_ptr = torch_mlu::mlu_data_ptr(pts_feature_impl);
   auto boxes3d_impl = torch_mlu::getMluTensorImpl(boxes3d_contiguous);
-  auto boxes3d_ptr = boxes3d_impl->cnnlMalloc();
+  auto boxes3d_ptr = torch_mlu::mlu_data_ptr(boxes3d_impl);
   auto pooled_features_impl =
       torch_mlu::getMluTensorImpl(pooled_features_contiguous);
-  auto pooled_features_ptr = pooled_features_impl->cnnlMalloc();
+  auto pooled_features_ptr = torch_mlu::mlu_data_ptr(pooled_features_impl);
   auto pooled_empty_flag_impl =
       torch_mlu::getMluTensorImpl(pooled_empty_flag_contiguous);
-  auto pooled_empty_flag_ptr = pooled_empty_flag_impl->cnnlMalloc();
+  auto pooled_empty_flag_ptr = torch_mlu::mlu_data_ptr(pooled_empty_flag_impl);
 
   // create tensor descriptors
   MluOpTensorDescriptor xyz_desc, pts_feature_desc, boxes3d_desc,
@@ -119,7 +119,7 @@ void RoIPointPool3dForwardMLUKernelLauncher(
 
   auto workspace = at::empty(workspace_size, xyz.options().dtype(at::kByte));
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
   TORCH_MLUOP_CHECK(mluOpRoiPointPool3d(
       handle, batch_size, pts_num, boxes_num, feature_in_len, sampled_pts_num,
       xyz_desc.desc(), xyz_ptr, pts_feature_desc.desc(), pts_feature_ptr,

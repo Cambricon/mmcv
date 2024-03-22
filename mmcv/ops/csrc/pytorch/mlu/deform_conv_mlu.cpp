@@ -52,13 +52,13 @@ void deform_conv_forward_mlu(Tensor input, Tensor weight, Tensor offset,
 
   //get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_contiguous);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto weight_impl = torch_mlu::getMluTensorImpl(weight_contiguous);
-  auto weight_ptr = weight_impl->cnnlMalloc();
+  auto weight_ptr = torch_mlu::mlu_data_ptr(weight_impl);
   auto offset_impl = torch_mlu::getMluTensorImpl(offset_contiguous);
-  auto offset_ptr = offset_impl->cnnlMalloc();
+  auto offset_ptr = torch_mlu::mlu_data_ptr(offset_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // allocate workspace
   size_t workspace_size = 0;
@@ -67,7 +67,7 @@ void deform_conv_forward_mlu(Tensor input, Tensor weight, Tensor offset,
       weight_desc.desc(), NULL, output_desc.desc(), &workspace_size));
   auto workspace = at::empty(workspace_size, input.options().dtype(at::ScalarType::Char));
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   TORCH_MLUOP_CHECK(mluOpDCNForward(handle, dcn_desc.desc(), input_desc.desc(),
       input_ptr, offset_desc.desc(), offset_ptr, NULL, NULL,
@@ -119,12 +119,12 @@ void deform_conv_backward_input_mlu(Tensor input, Tensor offset, Tensor gradOutp
   dcn_desc.set(input.dim(), padding, stride, dilation,
 	       deformable_group, group, im2col_step, MLUOP_DTYPE_FLOAT);
   // set ptrs
-  auto grad_ptr = grad_impl->cnnlMalloc(); 
-  auto input_ptr = input_impl->cnnlMalloc();
-  auto offset_ptr = offset_impl->cnnlMalloc();
-  auto weight_ptr = weight_impl->cnnlMalloc();
-  auto grad_input_ptr = grad_input_impl->cnnlMalloc();
-  auto grad_offset_ptr = grad_offset_impl->cnnlMalloc();
+  auto grad_ptr = torch_mlu::mlu_data_ptr(grad_impl); 
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
+  auto offset_ptr = torch_mlu::mlu_data_ptr(offset_impl);
+  auto weight_ptr = torch_mlu::mlu_data_ptr(weight_impl);
+  auto grad_input_ptr = torch_mlu::mlu_data_ptr(grad_input_impl);
+  auto grad_offset_ptr = torch_mlu::mlu_data_ptr(grad_offset_impl);
   // allocate workspace
   size_t data_workspace_size = 0;
   TORCH_MLUOP_CHECK(mluOpGetDCNBakcwardDataWorkspaceSize(
@@ -145,7 +145,7 @@ void deform_conv_backward_input_mlu(Tensor input, Tensor offset, Tensor gradOutp
   data_workspace = at::empty(data_workspace_size,
                     input.options().dtype(at::ScalarType::Char));
   auto data_workspace_impl = torch_mlu::getMluTensorImpl(data_workspace);
-  data_workspace_ptr = data_workspace_impl->mlu_data_ptr();
+  data_workspace_ptr = torch_mlu::mlu_data_ptr(data_workspace_impl);
   TORCH_MLUOP_CHECK(mluOpDCNBackwardData(
                         /* handle           */ handle,
                         /* dcn_desc         */ dcn_desc.desc(),
@@ -203,10 +203,10 @@ void deform_conv_backward_parameters_mlu(Tensor input, Tensor offset, Tensor gra
   dcn_desc.set(input.dim(), padding, stride, dilation,
 	       deformable_group, group, im2col_step, MLUOP_DTYPE_FLOAT);
   // set ptrs
-  auto grad_ptr = grad_impl->cnnlMalloc(); 
-  auto input_ptr = input_impl->cnnlMalloc();
-  auto offset_ptr = offset_impl->cnnlMalloc();
-  auto grad_weight_ptr = grad_weight_impl->cnnlMalloc();
+  auto grad_ptr = torch_mlu::mlu_data_ptr(grad_impl); 
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
+  auto offset_ptr = torch_mlu::mlu_data_ptr(offset_impl);
+  auto grad_weight_ptr = torch_mlu::mlu_data_ptr(grad_weight_impl);
 
   // allocate workspace
   size_t weight_workspace_size = 0;
@@ -226,7 +226,7 @@ void deform_conv_backward_parameters_mlu(Tensor input, Tensor offset, Tensor gra
   weight_workspace = at::empty(weight_workspace_size,
                         input.options().dtype(at::ScalarType::Char));
   auto weight_workspace_impl = torch_mlu::getMluTensorImpl(weight_workspace);
-  weight_workspace_ptr = weight_workspace_impl->mlu_data_ptr();
+  weight_workspace_ptr = torch_mlu::mlu_data_ptr(weight_workspace_impl);
   TORCH_MLUOP_CHECK(mluOpDCNBackwardWeight(
                         /* handle            */ handle,
                         /* dcn_desc          */ dcn_desc.desc(),

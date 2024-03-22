@@ -50,7 +50,7 @@ void RoiawarePool3dForwardMLUKernelLauncher(
 
   auto workspace = at::empty(workspace_size, rois.options().dtype(at::kByte));
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   auto rois_impl = torch_mlu::getMluTensorImpl(rois_contiguous);
   auto pts_impl = torch_mlu::getMluTensorImpl(pts_contiguous);
@@ -61,12 +61,12 @@ void RoiawarePool3dForwardMLUKernelLauncher(
   auto pooled_features_impl =
       torch_mlu::getMluTensorImpl(pooled_features_contiguous);
 
-  auto rois_ptr = rois_impl->cnnlMalloc();
-  auto pts_ptr = pts_impl->cnnlMalloc();
-  auto pts_feature_ptr = pts_feature_impl->cnnlMalloc();
-  auto argmax_ptr = argmax_impl->cnnlMalloc();
-  auto pts_idx_of_voxels_ptr = pts_idx_of_voxels_impl->cnnlMalloc();
-  auto pooled_features_ptr = pooled_features_impl->cnnlMalloc();
+  auto rois_ptr = torch_mlu::mlu_data_ptr(rois_impl);
+  auto pts_ptr = torch_mlu::mlu_data_ptr(pts_impl);
+  auto pts_feature_ptr = torch_mlu::mlu_data_ptr(pts_feature_impl);
+  auto argmax_ptr = torch_mlu::mlu_data_ptr(argmax_impl);
+  auto pts_idx_of_voxels_ptr = torch_mlu::mlu_data_ptr(pts_idx_of_voxels_impl);
+  auto pooled_features_ptr = torch_mlu::mlu_data_ptr(pooled_features_impl);
 
   CNLOG(INFO) << "Call mluOpRoiawarePool3dForward().";
   TORCH_MLUOP_CHECK(mluOpRoiawarePool3dForward(
@@ -128,10 +128,10 @@ void RoiawarePool3dBackwardMLUKernelLauncher(
   auto grad_out_impl = torch_mlu::getMluTensorImpl(grad_out_contiguous);
   auto grad_in_impl = torch_mlu::getMluTensorImpl(grad_in_contiguous);
 
-  auto pts_idx_of_voxels_ptr = pts_idx_of_voxels_impl->cnnlMalloc();
-  auto argmax_ptr = argmax_impl->cnnlMalloc();
-  auto grad_out_ptr = grad_out_impl->cnnlMalloc();
-  auto grad_in_ptr = grad_in_impl->cnnlMalloc();
+  auto pts_idx_of_voxels_ptr = torch_mlu::mlu_data_ptr(pts_idx_of_voxels_impl);
+  auto argmax_ptr = torch_mlu::mlu_data_ptr(argmax_impl);
+  auto grad_out_ptr = torch_mlu::mlu_data_ptr(grad_out_impl);
+  auto grad_in_ptr = torch_mlu::mlu_data_ptr(grad_in_impl);
 
   CNLOG(INFO) << "Call mluOpRoiawarePool3dBackward().";
   TORCH_MLUOP_CHECK(mluOpRoiawarePool3dBackward(

@@ -35,15 +35,15 @@ Tensor nms_rotated_mlu(Tensor boxes, Tensor scores, float iou_threshold) {
   auto workspace = at::empty(workspace_size, boxes.options().dtype(at::kByte));
 
   auto boxes_impl = torch_mlu::getMluTensorImpl(boxes_);
-  auto boxes_ptr = boxes_impl->cnnlMalloc();
+  auto boxes_ptr = torch_mlu::mlu_data_ptr(boxes_impl);
   auto scores_impl = torch_mlu::getMluTensorImpl(scores_);
-  auto scores_ptr = scores_impl->cnnlMalloc();
+  auto scores_ptr = torch_mlu::mlu_data_ptr(scores_impl);
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
   auto output_size_impl = torch_mlu::getMluTensorImpl(output_size);
-  auto output_size_ptr = output_size_impl->cnnlMalloc();
+  auto output_size_ptr = torch_mlu::mlu_data_ptr(output_size_impl);
 
   TORCH_MLUOP_CHECK(mluOpNmsRotated(
       handle, iou_threshold, boxes_desc.desc(), boxes_ptr, scores_desc.desc(),

@@ -67,13 +67,13 @@ void sigmoid_focal_loss_forward_mlu(Tensor input, Tensor target, Tensor weight,
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_contiguous);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto target_impl = torch_mlu::getMluTensorImpl(target_contiguous);
-  auto target_ptr = target_impl->cnnlMalloc();
+  auto target_ptr = torch_mlu::mlu_data_ptr(target_impl);
   auto weight_impl = torch_mlu::getMluTensorImpl(weight_contiguous);
-  auto weight_ptr = weight_impl->cnnlMalloc();
+  auto weight_ptr = torch_mlu::mlu_data_ptr(weight_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // set prefer computation performance and redcuntion approach
   mluOpComputationPreference_t prefer = MLUOP_COMPUTATION_FAST;
@@ -142,13 +142,13 @@ void sigmoid_focal_loss_backward_mlu(Tensor input, Tensor target, Tensor weight,
 
   // get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_contiguous);
-  auto input_ptr = input_impl->cnnlMalloc();
+  auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
   auto target_impl = torch_mlu::getMluTensorImpl(target_contiguous);
-  auto target_ptr = target_impl->cnnlMalloc();
+  auto target_ptr = torch_mlu::mlu_data_ptr(target_impl);
   auto weight_impl = torch_mlu::getMluTensorImpl(weight_contiguous);
-  auto weight_ptr = weight_impl->cnnlMalloc();
+  auto weight_ptr = torch_mlu::mlu_data_ptr(weight_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
-  auto output_ptr = output_impl->cnnlMalloc();
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
 
   // set prefer computation performance and redcuntion approach
   // backward only support MLUOP_COMPUTATION_HIGH_PRECISION

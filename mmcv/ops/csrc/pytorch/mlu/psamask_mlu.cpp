@@ -31,9 +31,9 @@ void PSAMaskForwardMLUKernelLauncher(const int psa_type, const Tensor x,
 
   auto handle = mluOpGetCurrentHandle();
   auto x_impl = torch_mlu::getMluTensorImpl(x_tensor);
-  auto x_ptr = x_impl->cnnlMalloc();
+  auto x_ptr = torch_mlu::mlu_data_ptr(x_impl);
   auto y_impl = torch_mlu::getMluTensorImpl(y_tmp);
-  auto y_ptr = y_impl->cnnlMalloc();
+  auto y_ptr = torch_mlu::mlu_data_ptr(y_impl);
 
   TORCH_MLUOP_CHECK(mluOpPsamaskForward(handle, psa_type, x_desc.desc(), x_ptr,
                                         h_mask, w_mask, y_desc.desc(), y_ptr));
@@ -63,9 +63,9 @@ void PSAMaskBackwardMLUKernelLauncher(const int psa_type, const Tensor dy,
 
   // get ptr of tensors
   auto dx_impl = torch_mlu::getMluTensorImpl(dx_tmp);
-  auto dx_ptr = dx_impl->cnnlMalloc();
+  auto dx_ptr = torch_mlu::mlu_data_ptr(dx_impl);
   auto dy_impl = torch_mlu::getMluTensorImpl(dy_tensor);
-  auto dy_ptr = dy_impl->cnnlMalloc();
+  auto dy_ptr = torch_mlu::mlu_data_ptr(dy_impl);
 
   TORCH_MLUOP_CHECK(mluOpPsamaskBackward(handle, psa_type, dy_desc.desc(),
                                          dy_ptr, h_mask, w_mask,

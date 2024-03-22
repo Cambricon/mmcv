@@ -12,10 +12,6 @@
 #pragma once
 #include <ATen/ATen.h>
 #include <c10/core/ScalarType.h>
-
-#ifdef MMCV_WITH_TORCH19
-#include "aten.h"
-#else
 #include "utils/cnlog.h"
 #include "utils/assert_tensor.h"
 #include "framework/core/device.h"
@@ -29,6 +25,12 @@ namespace torch_mlu::cnnl::ops {
 using torch_mlu::cnnl_contiguous;
 using torch_mlu::get_channels_last_memory_format;
 }
+#ifdef MMCV_WITH_TORCH_OLD
+namespace torch_mlu {
+inline void* mlu_data_ptr(c10::TensorImpl* impl) {
+  return impl->mlu_data_ptr();
+}
+} // namespace torch_mlu
 #endif
 
 #include "mlu_op.h"
@@ -46,7 +48,7 @@ using torch_mlu::get_channels_last_memory_format;
   MluOpTensorDescriptor NAME##_desc;                                \
   NAME##_desc.set(NAME##_contigous);                                \
   auto NAME##_impl = torch_mlu::getMluTensorImpl(NAME##_contigous); \
-  auto NAME##_ptr = NAME##_impl->cnnlMalloc();
+  auto NAME##_ptr = torch_mlu::mlu_data_ptr(NAME##_impl);
 
 #ifndef TORCH_MLUOP_CHECK
 #define TORCH_MLUOP_CHECK(EXPR)                                          \

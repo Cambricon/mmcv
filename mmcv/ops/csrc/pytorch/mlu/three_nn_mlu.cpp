@@ -40,11 +40,11 @@ void ThreeNNMLUKernelLauncher(int b, int n, int m, const Tensor unknown,
   auto dist2_impl = torch_mlu::getMluTensorImpl(dist2_contiguous);
   auto idx_impl = torch_mlu::getMluTensorImpl(idx_contiguous);
   auto workspace_impl = torch_mlu::getMluTensorImpl(known_workspace);
-  auto unknown_ptr = unknown_impl->cnnlMalloc();
-  auto known_ptr = known_impl->cnnlMalloc();
-  auto dist2_ptr = dist2_impl->cnnlMalloc();
-  auto idx_ptr = idx_impl->cnnlMalloc();
-  auto workspace_ptr = workspace_impl->cnnlMalloc();
+  auto unknown_ptr = torch_mlu::mlu_data_ptr(unknown_impl);
+  auto known_ptr = torch_mlu::mlu_data_ptr(known_impl);
+  auto dist2_ptr = torch_mlu::mlu_data_ptr(dist2_impl);
+  auto idx_ptr = torch_mlu::mlu_data_ptr(idx_impl);
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
 
   TORCH_MLUOP_CHECK(mluOpThreeNNForward(
       handle, unknown_desc.desc(), unknown_ptr, known_desc.desc(), known_ptr,
