@@ -2,8 +2,8 @@
   "version": "v1.1.0",
   "official_version": "2.1",
   "build_requires": {
-    "catch_113": ["1.18.0"],
-    "catch_210": ["24.01"],
+    "catch_113": ["1.19.0"],
+    "catch_210": ["1.19.0"],
     "mluops": ["v1.0.0"]},
   "args_combination": {
     "wheel1": ["1.13", "3.10"],

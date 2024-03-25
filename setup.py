@@ -62,6 +62,28 @@ def get_mlu_version():
     mlu_unique_version = "+" + version_value + "+" + pt_version
     return mluops_version[0], mlu_unique_version
 
+def get_local_mluops_version():
+    neuware_home = os.environ.get('NEUWARE_HOME')
+    if not neuware_home:
+        print("NEUWARE_HOME environment variable not set.")
+        return ""
+
+    local_lib_path = os.path.join(neuware_home, "lib64")
+    try:
+        matched_files = [fn for fn in os.listdir(local_lib_path) if fn.startswith("libmluops")]
+        pattern = re.compile(r'\.so\.(\d+\.\d+\.\d+)$')
+        for filename in matched_files:
+            match = pattern.search(filename)
+            if match:
+                local_mluops_version = match.group(1)
+                print("Found local mluops_version:", local_mluops_version)
+                return local_mluops_version
+        print("No matching mlu-ops found.")
+        return ""
+    except OSError as e:
+        print(f"Error accessing directory: {e}")
+        return ""
+
 def parse_requirements(fname='requirements/runtime.txt', with_version=True):
     """Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
@@ -292,6 +314,7 @@ def get_extensions():
             from torch_mlu.utils.cpp_extension import MLUExtension
 
             mmcv_mluops_version, _ = get_mlu_version()
+            local_mluops_version = get_local_mluops_version()
             mlu_ops_path = os.getenv('MMCV_MLU_OPS_PATH')
             if mlu_ops_path:
                 exists_mluops_version, _ = get_mlu_version()
@@ -315,24 +338,30 @@ def get_extensions():
                         'or rename or remove it.')
             else:
                 if not os.path.exists('mlu-ops'):
-                    import requests
-                    mluops_url = 'https://github.com/Cambricon/mlu-ops/' + \
-                        'archive/refs/tags/' + mmcv_mluops_version + '.zip'
-                    req = requests.get(mluops_url)
-                    with open('./mlu-ops.zip', 'wb') as f:
-                        try:
-                            f.write(req.content)
-                        except Exception:
-                            raise ImportError('failed to download mlu-ops')
+                    if parse_version(local_mluops_version) >= parse_version(mmcv_mluops_version[1:]):
+                        include_dirs.append(os.path.abspath(os.environ.get('NEUWARE_HOME') + '/include/'))
+                    else:
+                        import requests
+                        mluops_url = 'https://github.com/Cambricon/mlu-ops/' + \
+                            'archive/refs/tags/' + mmcv_mluops_version + '.zip'
+                        req = requests.get(mluops_url)
+                        with open('./mlu-ops.zip', 'wb') as f:
+                            try:
+                                f.write(req.content)
+                            except Exception:
+                                raise ImportError('failed to download mlu-ops')
 
-                    from zipfile import BadZipFile, ZipFile
-                    with ZipFile('./mlu-ops.zip', 'r') as archive:
-                        try:
-                            archive.extractall()
-                            dir_name = archive.namelist()[0].split('/')[0]
-                            os.rename(dir_name, 'mlu-ops')
-                        except BadZipFile:
-                            print('invalid mlu-ops.zip file')
+                        from zipfile import BadZipFile, ZipFile
+                        with ZipFile('./mlu-ops.zip', 'r') as archive:
+                            try:
+                                archive.extractall()
+                                dir_name = archive.namelist()[0].split('/')[0]
+                                os.rename(dir_name, 'mlu-ops')
+                            except BadZipFile:
+                                print('invalid mlu-ops.zip file')
+                        os.system("bash build.sh")
+                        extra_objects.append(os.path.abspath('./mmcv/lib/libmluops.a'))
+                        include_dirs.append(os.path.abspath('./mlu-ops/'))
                 else:
                     exists_mluops_version, _ = get_mlu_version()
                     if exists_mluops_version != mmcv_mluops_version:
@@ -350,31 +379,16 @@ def get_extensions():
             if parse_version(local_torch_version) < parse_version('2.3.0'):
                 define_macros += [('MMCV_WITH_TORCH_OLD', None)]
             mlu_args = os.getenv('MMCV_MLU_ARGS', '-DNDEBUG ')
-            mluops_includes = []
-            mluops_includes.append(
-                '-I' + os.path.abspath('./mlu-ops/kernels'))
-            mluops_includes.append('-I' + os.path.abspath('./mlu-ops/'))
-            extra_compile_args['cncc'] = [mlu_args] + \
-                mluops_includes if mlu_args else mluops_includes
             extra_compile_args['cxx'] += ['-fno-gnu-unique']
             op_files = glob.glob('./mmcv/ops/csrc/pytorch/*.cpp') + \
                 glob.glob('./mmcv/ops/csrc/pytorch/cpu/*.cpp') + \
-                glob.glob('./mmcv/ops/csrc/pytorch/mlu/*.cpp') + \
-                glob.glob(
-                    './mlu-ops/core/*.cpp', recursive=True) + \
-                glob.glob(
-                    './mlu-ops/core/*/*/*.cpp', recursive=True) + \
-                glob.glob(
-                    './mlu-ops/kernels/**/*.cpp', recursive=True) + \
-                glob.glob(
-                    './mlu-ops/kernels/**/*.mlu', recursive=True)
+                glob.glob('./mmcv/ops/csrc/pytorch/mlu/*.cpp')
             extra_link_args = [
                 '-Wl,--whole-archive',
                 '-Wl,--no-whole-archive'
             ]
             extension = MLUExtension
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
-            include_dirs.append(os.path.abspath('./mlu-ops/'))
         elif (hasattr(torch.backends, 'mps')
               and torch.backends.mps.is_available()) or os.getenv(
                   'FORCE_MPS', '0') == '1':
