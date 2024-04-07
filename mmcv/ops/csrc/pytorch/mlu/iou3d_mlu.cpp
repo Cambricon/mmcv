@@ -21,7 +21,7 @@ void IoU3DNMS3DMLUKernelLauncher(Tensor boxes, Tensor &keep, Tensor &keep_num,
   int input_box_num = boxes.size(0);
   auto boxes_ = torch_mlu::cnnl::ops::cnnl_contiguous(boxes);
   auto output = keep.to(boxes.options().dtype(at::kInt));
-  auto output_size = at::empty({1}, boxes.options().dtype(at::kInt));
+  auto output_size = keep_num.to(boxes.options().dtype(at::kInt));
 
   MluOpTensorDescriptor boxes_desc, output_desc;
   boxes_desc.set(boxes_);
@@ -39,9 +39,9 @@ void IoU3DNMS3DMLUKernelLauncher(Tensor boxes, Tensor &keep, Tensor &keep_num,
   auto boxes_ptr = torch_mlu::mlu_data_ptr(boxes_impl);
   auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
   auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
-  auto output_impl = torch_mlu::getMluTensorImpl(keep);
+  auto output_impl = torch_mlu::getMluTensorImpl(output);
   auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
-  auto output_size_impl = torch_mlu::getMluTensorImpl(keep_num);
+  auto output_size_impl = torch_mlu::getMluTensorImpl(output_size);
   auto output_size_ptr = torch_mlu::mlu_data_ptr(output_size_impl);
 
   // nms desc
@@ -67,6 +67,8 @@ void IoU3DNMS3DMLUKernelLauncher(Tensor boxes, Tensor &keep, Tensor &keep_num,
                              NULL, NULL, workspace_ptr, workspace_size,
                              output_desc.desc(), output_ptr, output_size_ptr));
   TORCH_MLUOP_CHECK(mluOpDestroyNmsDescriptor(nms_desc));
+  keep.copy_(output);
+  keep_num.copy_(output_size);
 }
 
 void iou3d_nms3d_forward_mlu(const Tensor boxes, Tensor &keep, Tensor &keep_num,
