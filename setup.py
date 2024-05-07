@@ -5,13 +5,19 @@ import re
 from pkg_resources import DistributionNotFound, get_distribution, parse_version
 from setuptools import find_packages, setup
 
+import torch
+try:
+    import torch_mlu
+except Exception:
+    pass
+
 EXT_TYPE = ''
 try:
     import torch
     if torch.__version__ == 'parrots':
         from parrots.utils.build_extension import BuildExtension
         EXT_TYPE = 'parrots'
-    elif (hasattr(torch, 'is_mlu_available') and torch.is_mlu_available()) or \
+    elif (hasattr(torch, 'mlu') and torch.mlu.is_available()) or \
             os.getenv('FORCE_MLU', '0') == '1':
         from torch_mlu.utils.cpp_extension import BuildExtension
         EXT_TYPE = 'pytorch'
@@ -43,7 +49,7 @@ def get_version():
     return locals()['__version__']
 
 def get_mlu_version():
-    if not (hasattr(torch, 'is_mlu_available') and torch.is_mlu_available()):
+    if not (hasattr(torch, 'mlu') and torch.mlu.is_available()):
         return "", ""
     version_file = './build.property'
     import json
@@ -308,8 +314,7 @@ def get_extensions():
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/pytorch'))
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common/cuda'))
-        elif (hasattr(torch, 'is_mlu_available') and
-                torch.is_mlu_available()) or \
+        elif (hasattr(torch, 'mlu') and torch.mlu.is_available()) or \
                 os.getenv('FORCE_MLU', '0') == '1':
             from torch_mlu.utils.cpp_extension import MLUExtension
 

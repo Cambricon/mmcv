@@ -7,6 +7,11 @@ from collections import namedtuple
 
 import torch
 
+try:
+    import torch_mlu
+except Exception:
+    pass
+
 if torch.__version__ != 'parrots':
 
     def load_ext(name, funcs):
