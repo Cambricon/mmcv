@@ -7,7 +7,7 @@ from mmcv.utils import IS_CUDA_AVAILABLE, IS_MLU_AVAILABLE
 
 
 @pytest.mark.skipif(
-    not torch.cuda.is_available(), reason='requires CUDA support')
+    not torch.mlu.is_available(), reason='requires MLU support')
 @pytest.mark.parametrize('device', [
     pytest.param(
         'cuda',

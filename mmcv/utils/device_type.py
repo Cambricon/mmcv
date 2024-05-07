@@ -15,8 +15,9 @@ IS_IPU_AVAILABLE = is_ipu_available()
 def is_mlu_available() -> bool:
     try:
         import torch
-        return (hasattr(torch, 'is_mlu_available')
-                and torch.is_mlu_available())
+        import torch_mlu
+        return (hasattr(torch, 'mlu')
+                and torch.mlu.is_available())
     except Exception:
         return False
 
