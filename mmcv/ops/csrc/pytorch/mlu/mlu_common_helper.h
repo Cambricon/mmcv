@@ -143,7 +143,7 @@ class MluOpHandle {
 template <typename T>
 void convertShapeAndStride(std::vector<T>& shape_info,
                            std::vector<T>& stride_info) {
-  TORCH_MLU_CHECK(shape_info.size() == stride_info.size(),
+  TORCH_CHECK(shape_info.size() == stride_info.size(),
                   "shape size need equal to stride size.");
   const int dim = shape_info.size();
   std::vector<T> temp_shape_info(dim);
@@ -168,7 +168,7 @@ std::vector<DST_T> checkUpperBoundAndCastTo(const std::vector<SRC_T>& input) {
   output.reserve(input.size());
   for (const auto& val : input) {
     if (val > std::numeric_limits<DST_T>::max()) {
-      TORCH_MLU_CHECK(false, "Requires dim size not greater than ",
+      TORCH_CHECK(false, "Requires dim size not greater than ",
                       std::numeric_limits<DST_T>::max(), ". But got ", val,
                       ".");
     }
