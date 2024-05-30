@@ -14,55 +14,9 @@
 
 #ifdef MMCV_WITH_MLU
 #include "utils/cnlog.h"
-#include "utils/assert_tensor.h"
-#include "framework/core/device.h"
-#include "framework/core/queue.h"
-#include "framework/core/notifier.h"
 #include "aten/utils/cnnl_util.h"
 #include "aten/utils/types.h"
-#include "utils/cndumper.h"
 #include "c10/core/ScalarTypeToTypeMeta.h"
-
-#define NFU_ALIGN_SIZE 128
-
-#define PAD_UP(x, y) (((x) / (y) + (int)((x) % (y) > 0)) * (y))
-
-#define PAD_DOWN(x, y) (((x) / (y)) * (y))
-
-#define CEIL_DIV(x, y) (((x) + (y)-1) / (y))
-
-#define CEIL_ALIGN(x, y) (((x) + (y)-1) / (y) * (y))
-
-inline int32_t getJobLimitCapability() {
-  CNcontext drv_ctx;
-  TORCH_CHECK(CN_SUCCESS == cnCtxGetCurrent(&drv_ctx), "cnCtxGetCurrent fails");
-  CNctxConfigParam ctx_conf_param;
-  TORCH_CHECK(
-      CN_SUCCESS == cnGetCtxConfigParam(drv_ctx, CN_CTX_CONFIG_UNION_LIMIT,
-                                        &ctx_conf_param),
-      "cnGetCtxConfigParam fails.");
-  return (int32_t)ctx_conf_param.unionLimit;
-}
-
-inline int32_t getCoreNumOfJobLimitCapability() {
-  switch (getJobLimitCapability()) {
-    default:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster) *
-             getJobLimitCapability();
-    case CN_KERNEL_CLASS_BLOCK:
-      return 1;
-    case CN_KERNEL_CLASS_UNION:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster);
-    case CN_KERNEL_CLASS_UNION2:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster) * 2;
-    case CN_KERNEL_CLASS_UNION4:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster) * 4;
-    case CN_KERNEL_CLASS_UNION8:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster) * 8;
-    case CN_KERNEL_CLASS_UNION16:
-      return torch_mlu::getDeviceAttr(cnrtAttrMcorePerCluster) * 16;
-  }
-}
 
 #ifdef MMCV_WITH_MLU_KPRIVATE
 #define REGISTER_MLU_IMPL(key, value) REGISTER_DEVICE_IMPL(key, PrivateUse1, value)
