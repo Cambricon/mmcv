@@ -3,3 +3,4 @@
 -r requirements/runtime.txt
 -r requirements/test.txt
 -r requirements/reportportal.txt
+-r requirements/torch.txt
