@@ -17,7 +17,7 @@ try:
     if torch.__version__ == 'parrots':
         from parrots.utils.build_extension import BuildExtension
         EXT_TYPE = 'parrots'
-    elif (hasattr(torch, 'mlu') and torch.mlu.is_available()) or \
+    elif (hasattr(torch, 'mlu')) or \
             os.getenv('FORCE_MLU', '0') == '1':
         from torch_mlu.utils.cpp_extension import BuildExtension
         EXT_TYPE = 'pytorch'
@@ -49,7 +49,7 @@ def get_version():
     return locals()['__version__']
 
 def get_mlu_version():
-    if not (hasattr(torch, 'mlu') and torch.mlu.is_available()):
+    if not (hasattr(torch, 'mlu')):
         return "", ""
     version_file = './build.property'
     import json
@@ -314,7 +314,7 @@ def get_extensions():
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/pytorch'))
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common'))
             include_dirs.append(os.path.abspath('./mmcv/ops/csrc/common/cuda'))
-        elif (hasattr(torch, 'mlu') and torch.mlu.is_available()) or \
+        elif (hasattr(torch, 'mlu')) or \
                 os.getenv('FORCE_MLU', '0') == '1':
             from torch_mlu.utils.cpp_extension import MLUExtension
 
