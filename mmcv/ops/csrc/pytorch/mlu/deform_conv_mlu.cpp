@@ -29,11 +29,11 @@ void deform_conv_forward_mlu(Tensor input, Tensor weight, Tensor offset,
   
   // set to contiguous
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
-  auto offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(offset, memory_format);
-  auto weight_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(weight, memory_format);
-  auto output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(output, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto input_contiguous = torch_mlu::cnnl_contiguous(input, memory_format);
+  auto offset_contiguous = torch_mlu::cnnl_contiguous(offset, memory_format);
+  auto weight_contiguous = torch_mlu::cnnl_contiguous(weight, memory_format);
+  auto output_contiguous = torch_mlu::cnnl_contiguous(output, memory_format);
 
   // get current handle
   auto handle = mluOpGetCurrentHandle();
@@ -87,15 +87,15 @@ void deform_conv_backward_input_mlu(Tensor input, Tensor offset, Tensor gradOutp
   int dilation[2] = {(int)dilationH, (int)dilationW};
   // set tensor contiguous
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto grad_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(gradOutput, memory_format);
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format); 
-  auto offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(offset, memory_format);
-  auto weight_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(weight, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto grad_contiguous = torch_mlu::cnnl_contiguous(gradOutput, memory_format);
+  auto input_contiguous = torch_mlu::cnnl_contiguous(input, memory_format); 
+  auto offset_contiguous = torch_mlu::cnnl_contiguous(offset, memory_format);
+  auto weight_contiguous = torch_mlu::cnnl_contiguous(weight, memory_format);
   auto grad_input_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(gradInput, memory_format);
+      torch_mlu::cnnl_contiguous(gradInput, memory_format);
   auto grad_offset_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(gradOffset, memory_format);
+      torch_mlu::cnnl_contiguous(gradOffset, memory_format);
   // get tensor impl
   auto grad_impl = torch_mlu::getMluTensorImpl(grad_contiguous);
   auto grad_input_impl = torch_mlu::getMluTensorImpl(grad_input_contiguous);
@@ -179,12 +179,12 @@ void deform_conv_backward_parameters_mlu(Tensor input, Tensor offset, Tensor gra
   int stride[2] = {(int)dH, (int)dW};
   int dilation[2] = {(int)dilationH, (int)dilationW};
   // set tensor contiguous
-  auto memory_format = torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto grad_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(gradOutput, memory_format);
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format); 
-  auto offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(offset, memory_format);
+  auto memory_format = torch_mlu::get_channels_last_memory_format(input.dim());
+  auto grad_contiguous = torch_mlu::cnnl_contiguous(gradOutput, memory_format);
+  auto input_contiguous = torch_mlu::cnnl_contiguous(input, memory_format); 
+  auto offset_contiguous = torch_mlu::cnnl_contiguous(offset, memory_format);
   auto grad_weight_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(gradWeight, memory_format);
+      torch_mlu::cnnl_contiguous(gradWeight, memory_format);
   // get tensor impl
   auto grad_impl = torch_mlu::getMluTensorImpl(grad_contiguous);
   auto grad_weight_impl = torch_mlu::getMluTensorImpl(grad_weight_contiguous);

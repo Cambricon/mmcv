@@ -21,8 +21,8 @@ Tensor NMSMLUKernelLauncher(Tensor boxes, Tensor scores, float iou_threshold,
   int max_output_boxes = boxes.size(0);
 
   // transpose boxes (n, 4) to (4, n) for better performance
-  auto boxes_ = torch_mlu::cnnl::ops::cnnl_contiguous(boxes);
-  auto scores_ = torch_mlu::cnnl::ops::cnnl_contiguous(scores);
+  auto boxes_ = torch_mlu::cnnl_contiguous(boxes);
+  auto scores_ = torch_mlu::cnnl_contiguous(scores);
   auto output = at::empty({max_output_boxes}, boxes.options().dtype(at::kInt));
   auto output_size = at::empty({1}, scores.options().dtype(at::kInt));
 

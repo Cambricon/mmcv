@@ -17,12 +17,12 @@ void BoxIouRotatedMLUKernelLauncher(const Tensor boxes1, const Tensor boxes2,
   // get compute handle
   auto handle = mluOpGetCurrentHandle();
 
-  auto boxes1_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto boxes1_contiguous = torch_mlu::cnnl_contiguous(
       boxes1, boxes1.suggest_memory_format());
-  auto boxes2_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto boxes2_contiguous = torch_mlu::cnnl_contiguous(
       boxes2, boxes2.suggest_memory_format());
   auto ious_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(ious, ious.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(ious, ious.suggest_memory_format());
 
   MluOpTensorDescriptor boxes1_desc, boxes2_desc, ious_desc;
   boxes1_desc.set(boxes1_contiguous);
@@ -37,7 +37,7 @@ void BoxIouRotatedMLUKernelLauncher(const Tensor boxes1, const Tensor boxes2,
   auto boxes2_ptr = torch_mlu::mlu_data_ptr(boxes2_impl);
   auto ious_ptr = torch_mlu::mlu_data_ptr(ious_impl);
 
-  CNLOG(INFO) << "Call mluOpBoxIouRotated().";
+  LOG(INFO) << "Call mluOpBoxIouRotated().";
   TORCH_MLUOP_CHECK(mluOpBoxIouRotated(
       handle, mode_flag, aligned, boxes1_desc.desc(), boxes1_ptr,
       boxes2_desc.desc(), boxes2_ptr, ious_desc.desc(), ious_ptr));

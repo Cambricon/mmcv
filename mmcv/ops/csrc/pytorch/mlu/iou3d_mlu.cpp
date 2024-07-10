@@ -19,7 +19,7 @@ void IoU3DNMS3DMLUKernelLauncher(Tensor boxes, Tensor &keep, Tensor &keep_num,
   }
 
   int input_box_num = boxes.size(0);
-  auto boxes_ = torch_mlu::cnnl::ops::cnnl_contiguous(boxes);
+  auto boxes_ = torch_mlu::cnnl_contiguous(boxes);
   auto output = keep.to(boxes.options().dtype(at::kInt));
   auto output_size = keep_num.to(boxes.options().dtype(at::kInt));
 

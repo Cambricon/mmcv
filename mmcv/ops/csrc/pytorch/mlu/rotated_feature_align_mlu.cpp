@@ -17,13 +17,13 @@ void RotatedFeatureAlignForwardMLUKernelLauncher(const Tensor features,
                                                  const int points,
                                                  Tensor output) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(features.dim());
+      torch_mlu::get_channels_last_memory_format(features.dim());
   auto features_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(features, memory_format);
-  auto best_bboxes_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::cnnl_contiguous(features, memory_format);
+  auto best_bboxes_contiguous = torch_mlu::cnnl_contiguous(
       best_bboxes, best_bboxes.suggest_memory_format());
   auto output_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(output, memory_format);
+      torch_mlu::cnnl_contiguous(output, memory_format);
 
   MluOpTensorDescriptor features_desc, best_bboxes_desc, output_desc;
   features_desc.set_with_layout(features_, MLUOP_LAYOUT_NHWC);
@@ -53,13 +53,13 @@ void RotatedFeatureAlignBackwardMLUKernelLauncher(const Tensor top_grad,
                                                   const int points,
                                                   Tensor bottom_grad) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(top_grad.dim());
+      torch_mlu::get_channels_last_memory_format(top_grad.dim());
   auto top_grad_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(top_grad, memory_format);
-  auto best_bboxes_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::cnnl_contiguous(top_grad, memory_format);
+  auto best_bboxes_contiguous = torch_mlu::cnnl_contiguous(
       best_bboxes, best_bboxes.suggest_memory_format());
   auto bottom_grad_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(bottom_grad, memory_format);
+      torch_mlu::cnnl_contiguous(bottom_grad, memory_format);
 
   // get ptr of tensors
   auto top_grad_impl = torch_mlu::getMluTensorImpl(top_grad_);

@@ -17,12 +17,12 @@ void DeformRoIPoolForwardMLUKernelLauncher(Tensor input, Tensor rois,
                                            float spatial_scale,
                                            int sampling_ratio, float gamma) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto input_ = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto input_ = torch_mlu::cnnl_contiguous(input, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   auto output_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(output, memory_format);
+      torch_mlu::cnnl_contiguous(output, memory_format);
 
   MluOpTensorDescriptor input_desc, rois_desc, offset_desc, output_desc;
   input_desc.set_with_layout(input_, MLUOP_LAYOUT_NHWC);
@@ -32,7 +32,7 @@ void DeformRoIPoolForwardMLUKernelLauncher(Tensor input, Tensor rois,
   mluOpTensorDescriptor_t offset_real_desc = NULL;
   void *offset_ptr = NULL;
   if (offset.defined() && offset.numel() > 0) {
-    auto offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+    auto offset_contiguous = torch_mlu::cnnl_contiguous(
         offset, offset.suggest_memory_format());
     offset_desc.set(offset_contiguous);
     offset_real_desc = offset_desc.desc();
@@ -63,16 +63,16 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
     Tensor grad_input, Tensor grad_offset, int pooled_height, int pooled_width,
     float spatial_scale, int sampling_ratio, float gamma) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_output.dim());
+      torch_mlu::get_channels_last_memory_format(grad_output.dim());
   auto grad_output_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(grad_output, memory_format);
+      torch_mlu::cnnl_contiguous(grad_output, memory_format);
   memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto input_ = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto input_ = torch_mlu::cnnl_contiguous(input, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   auto grad_input_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(grad_input, memory_format);
+      torch_mlu::cnnl_contiguous(grad_input, memory_format);
 
   // get ptr of tensors
   auto grad_output_impl = torch_mlu::getMluTensorImpl(grad_output_);
@@ -93,7 +93,7 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
   mluOpTensorDescriptor_t offset_real_desc = NULL;
   void *offset_ptr = NULL;
   if (offset.defined() && offset.numel() > 0) {
-    auto offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+    auto offset_contiguous = torch_mlu::cnnl_contiguous(
         offset, offset.suggest_memory_format());
     offset_desc.set(offset_contiguous);
     offset_real_desc = offset_desc.desc();
@@ -103,7 +103,7 @@ void DeformRoIPoolBackwardMLUKernelLauncher(
   mluOpTensorDescriptor_t grad_offset_real_desc = NULL;
   void *grad_offset_ptr = NULL;
   if (grad_offset.defined() && grad_offset.numel() > 0) {
-    auto grad_offset_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+    auto grad_offset_contiguous = torch_mlu::cnnl_contiguous(
         grad_offset, grad_offset.suggest_memory_format());
     grad_offset_desc.set(grad_offset_contiguous);
     grad_offset_real_desc = grad_offset_desc.desc();

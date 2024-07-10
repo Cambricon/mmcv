@@ -18,12 +18,12 @@ void ROIAlignRotatedForwardMLUKernelLauncher(Tensor input, Tensor rois,
                                              int sampling_ratio, bool aligned,
                                              bool clockwise) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto input_ = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto input_ = torch_mlu::cnnl_contiguous(input, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   auto output_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(output, memory_format);
+      torch_mlu::cnnl_contiguous(output, memory_format);
 
   MluOpTensorDescriptor input_desc, rois_desc, output_desc;
   input_desc.set_with_layout(input_, MLUOP_LAYOUT_NHWC);
@@ -53,13 +53,13 @@ void ROIAlignRotatedBackwardMLUKernelLauncher(
     int pooled_width, float spatial_scale, int sampling_ratio, bool aligned,
     bool clockwise) {
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(top_grad.dim());
+      torch_mlu::get_channels_last_memory_format(top_grad.dim());
   auto top_grad_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(top_grad, memory_format);
+      torch_mlu::cnnl_contiguous(top_grad, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   auto bottom_grad_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(bottom_grad, memory_format);
+      torch_mlu::cnnl_contiguous(bottom_grad, memory_format);
 
   // get ptr of tensors
   auto top_grad_impl = torch_mlu::getMluTensorImpl(top_grad_);

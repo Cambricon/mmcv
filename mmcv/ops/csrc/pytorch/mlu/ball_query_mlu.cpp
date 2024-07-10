@@ -14,11 +14,11 @@
 void ball_query_forward_mlu(int b, int n, int m, float min_radius,
                             float max_radius, int nsample, const Tensor new_xyz,
                             const Tensor xyz, Tensor idx) {
-  auto new_xyz_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto new_xyz_contiguous = torch_mlu::cnnl_contiguous(
       new_xyz, new_xyz.suggest_memory_format());
-  auto xyz_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto xyz_contiguous = torch_mlu::cnnl_contiguous(
       xyz, new_xyz.suggest_memory_format());
-  auto idx_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto idx_contiguous = torch_mlu::cnnl_contiguous(
       idx, new_xyz.suggest_memory_format());
 
   MluOpTensorDescriptor new_xyz_desc, xyz_desc, idx_desc;

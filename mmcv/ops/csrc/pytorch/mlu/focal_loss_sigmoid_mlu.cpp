@@ -39,7 +39,7 @@ void sigmoid_focal_loss_forward_mlu(Tensor input, Tensor target, Tensor weight,
                 input.scalar_type(), ", weight type is ", weight.scalar_type(),
                 ".");
   } else {
-    CNLOG(INFO) << "weight is a empty tensor.";
+    LOG(INFO) << "weight is a empty tensor.";
   }
 
   // return if zero-element
@@ -48,14 +48,14 @@ void sigmoid_focal_loss_forward_mlu(Tensor input, Tensor target, Tensor weight,
   }
 
   // contiguous
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto input_contiguous = torch_mlu::cnnl_contiguous(
       input, input.suggest_memory_format());
   // target only support in32
-  auto target_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto target_contiguous = torch_mlu::cnnl_contiguous(
       target.toType(at::kInt), target.suggest_memory_format());
-  auto weight_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto weight_contiguous = torch_mlu::cnnl_contiguous(
       weight, weight.suggest_memory_format());
-  auto output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto output_contiguous = torch_mlu::cnnl_contiguous(
       output, output.suggest_memory_format());
 
   // set tensor descriptor
@@ -114,7 +114,7 @@ void sigmoid_focal_loss_backward_mlu(Tensor input, Tensor target, Tensor weight,
                 ".");
     has_weight = true;
   } else {
-    CNLOG(INFO) << "weight is a empty tensor.";
+    LOG(INFO) << "weight is a empty tensor.";
   }
 
   if (input.numel() == 0 || target.numel() == 0 || output.numel() == 0) {
@@ -123,14 +123,14 @@ void sigmoid_focal_loss_backward_mlu(Tensor input, Tensor target, Tensor weight,
   }
 
   // contiguous
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto input_contiguous = torch_mlu::cnnl_contiguous(
       input, input.suggest_memory_format());
   // only support in32
-  auto target_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto target_contiguous = torch_mlu::cnnl_contiguous(
       target.toType(at::kInt), target.suggest_memory_format());
-  auto weight_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto weight_contiguous = torch_mlu::cnnl_contiguous(
       weight, weight.suggest_memory_format());
-  auto output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto output_contiguous = torch_mlu::cnnl_contiguous(
       output, output.suggest_memory_format());
 
   // set tensor descriptor

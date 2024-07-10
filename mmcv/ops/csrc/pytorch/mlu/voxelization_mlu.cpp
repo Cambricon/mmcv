@@ -17,7 +17,7 @@
  * this MACRO.
  *************************************************************************/
 #define INITIAL_MLU_PARAM_WITH_TENSOR(NAME)                         \
-  auto NAME##_contigous = torch_mlu::cnnl::ops::cnnl_contiguous(    \
+  auto NAME##_contigous = torch_mlu::cnnl_contiguous(    \
       NAME, NAME.suggest_memory_format());                          \
   MluOpTensorDescriptor NAME##_desc;                                \
   NAME##_desc.set(NAME##_contigous);                                \

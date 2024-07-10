@@ -50,13 +50,13 @@ std::vector<torch::Tensor> GetIndicePairsForwardMLUKernelLauncher(
                      : std::min(numAct * kernelVolume, batch * outputVolume);
   torch::Tensor out_indices =
       at::zeros({out_size, coorDim + 1}, indices.options().dtype(at::kInt));
-  auto indices_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto indices_contiguous = torch_mlu::cnnl_contiguous(
       indices, at::MemoryFormat::Contiguous);
-  auto indicePairs_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto indicePairs_contiguous = torch_mlu::cnnl_contiguous(
       indicePairs, at::MemoryFormat::Contiguous);
-  auto indiceNum_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto indiceNum_contiguous = torch_mlu::cnnl_contiguous(
       indiceNum, at::MemoryFormat::Contiguous);
-  auto out_indices_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto out_indices_contiguous = torch_mlu::cnnl_contiguous(
       out_indices, at::MemoryFormat::Contiguous);
 
   std::vector<int> input_space;
@@ -154,13 +154,13 @@ torch::Tensor IndiceConvForwardMLUKernelLauncher(
   torch::Tensor output =
       at::zeros({numActOut, C}, features.options().dtype(at::kFloat));
   // generate descriptor
-  auto features_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto features_contiguous = torch_mlu::cnnl_contiguous(
       features, at::MemoryFormat::Contiguous);
-  auto filters_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto filters_contiguous = torch_mlu::cnnl_contiguous(
       filters, at::MemoryFormat::Contiguous);
-  auto indice_pairs_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto indice_pairs_contiguous = torch_mlu::cnnl_contiguous(
       indicePairs, at::MemoryFormat::Contiguous);
-  auto output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto output_contiguous = torch_mlu::cnnl_contiguous(
       output, at::MemoryFormat::Contiguous);
 
   MluOpTensorDescriptor features_desc, filters_desc, indice_pairs_desc,
@@ -262,17 +262,17 @@ std::vector<torch::Tensor> IndiceConvBackwardMLUKernelLauncher(
         at::zeros({d, h, w, c, n}, filters.options().dtype(at::kFloat));
   }
 
-  auto features_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto features_contiguous = torch_mlu::cnnl_contiguous(
       features, at::MemoryFormat::Contiguous);
-  auto filters_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto filters_contiguous = torch_mlu::cnnl_contiguous(
       filters, at::MemoryFormat::Contiguous);
-  auto output_grad_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto output_grad_contiguous = torch_mlu::cnnl_contiguous(
       outGrad, at::MemoryFormat::Contiguous);
-  auto indice_pairs_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto indice_pairs_contiguous = torch_mlu::cnnl_contiguous(
       indicePairs, at::MemoryFormat::Contiguous);
-  auto input_grad_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto input_grad_contiguous = torch_mlu::cnnl_contiguous(
       features, at::MemoryFormat::Contiguous);
-  auto filters_grad_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto filters_grad_contiguous = torch_mlu::cnnl_contiguous(
       filters, at::MemoryFormat::Contiguous);
 
   MluOpTensorDescriptor features_desc, output_grad_desc, filters_desc,
