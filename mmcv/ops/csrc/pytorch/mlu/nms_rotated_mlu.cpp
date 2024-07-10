@@ -17,8 +17,8 @@ Tensor nms_rotated_mlu(Tensor boxes, Tensor scores, float iou_threshold) {
   }
 
   int boxes_num = boxes.size(0);
-  auto boxes_ = torch_mlu::cnnl::ops::cnnl_contiguous(boxes);
-  auto scores_ = torch_mlu::cnnl::ops::cnnl_contiguous(scores);
+  auto boxes_ = torch_mlu::cnnl_contiguous(boxes);
+  auto scores_ = torch_mlu::cnnl_contiguous(scores);
   auto output = at::empty({boxes_num}, boxes.options().dtype(at::kInt));
   auto output_size = at::empty({1}, scores.options().dtype(at::kInt));
 

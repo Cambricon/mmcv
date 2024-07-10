@@ -75,14 +75,14 @@ void RoIPointPool3dForwardMLUKernelLauncher(
 
   // set contiguous
   auto xyz_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(xyz, xyz.suggest_memory_format());
-  auto pts_feature_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::cnnl_contiguous(xyz, xyz.suggest_memory_format());
+  auto pts_feature_contiguous = torch_mlu::cnnl_contiguous(
       pts_feature, pts_feature.suggest_memory_format());
-  auto boxes3d_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto boxes3d_contiguous = torch_mlu::cnnl_contiguous(
       boxes3d, boxes3d.suggest_memory_format());
-  auto pooled_features_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto pooled_features_contiguous = torch_mlu::cnnl_contiguous(
       pooled_features, pooled_features.suggest_memory_format());
-  auto pooled_empty_flag_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto pooled_empty_flag_contiguous = torch_mlu::cnnl_contiguous(
       pooled_empty_flag, pooled_empty_flag.suggest_memory_format());
 
   // get ptr of tensors

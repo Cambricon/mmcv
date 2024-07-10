@@ -174,7 +174,7 @@ mluOpHandle_t mluOpGetCurrentHandle(c10::DeviceIndex device_index) {
     device_index = torch_mlu::current_device();
   }
   std::lock_guard<std::mutex> mmcv_mluop_guard(mmcv_mluop_mutex);
-  auto queue = torch_mlu::getCurrentQueue(device_index).queue();
+  auto queue = torch_mlu::getCurrentMLUStream(device_index).stream();
   mmcv_mluop_handles[device_index].setQueue(queue);
   return mmcv_mluop_handles[device_index].handle;
 }

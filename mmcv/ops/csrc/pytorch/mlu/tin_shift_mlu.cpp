@@ -33,11 +33,11 @@ void TINShiftForwardMLUKernelLauncher(Tensor input, Tensor shift,
   }
 
   // set contiguous
-  auto input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto input_contiguous = torch_mlu::cnnl_contiguous(
       input, input.suggest_memory_format());
-  auto shift_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto shift_contiguous = torch_mlu::cnnl_contiguous(
       shift, shift.suggest_memory_format());
-  auto output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto output_contiguous = torch_mlu::cnnl_contiguous(
       output, output.suggest_memory_format());
 
   // get tensor impl
@@ -89,11 +89,11 @@ void TINShiftBackwardMLUKernelLauncher(Tensor grad_output, Tensor shift,
   }
 
   // set contiguous
-  auto grad_output_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto grad_output_contiguous = torch_mlu::cnnl_contiguous(
       grad_output, grad_output.suggest_memory_format());
-  auto shift_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto shift_contiguous = torch_mlu::cnnl_contiguous(
       shift, shift.suggest_memory_format());
-  auto grad_input_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto grad_input_contiguous = torch_mlu::cnnl_contiguous(
       grad_input, grad_input.suggest_memory_format());
 
   // get tensor impl

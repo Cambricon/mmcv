@@ -13,12 +13,17 @@
 #include <ATen/ATen.h>
 #include <c10/core/ScalarType.h>
 #include "aten/utils/cnnl_util.h"
-#include "aten/operators/cnnl/cnnl_kernel.h"
-#include "aten/operators/cnnl/internal/cnnl_internal.h"
-namespace torch_mlu::cnnl::ops {
-using torch_mlu::cnnl_contiguous;
-using torch_mlu::get_channels_last_memory_format;
-}
+#include "aten/utils/exceptions.h"
+#include "aten/utils/tensor_util.h"
+#include "aten/utils/types.h"
+#include "aten/cnnl/cnnlHandle.h"
+#include "aten/cnnl/cnnlTensorDescriptors.h"
+#include "framework/core/MLUStream.h"
+
+using at::IntArrayRef;
+using at::Tensor;
+using at::TensorList;
+
 #ifdef MMCV_WITH_TORCH_OLD
 namespace torch_mlu {
 inline void* mlu_data_ptr(c10::TensorImpl* impl) {
@@ -37,7 +42,7 @@ inline void* mlu_data_ptr(c10::TensorImpl* impl) {
  * this MACRO.
  *************************************************************************/
 #define INITIAL_MLU_PARAM_WITH_TENSOR(NAME)                         \
-  auto NAME##_contigous = torch_mlu::cnnl::ops::cnnl_contiguous(    \
+  auto NAME##_contigous = torch_mlu::cnnl_contiguous(    \
       NAME, NAME.suggest_memory_format());                          \
   MluOpTensorDescriptor NAME##_desc;                                \
   NAME##_desc.set(NAME##_contigous);                                \
@@ -49,7 +54,7 @@ inline void* mlu_data_ptr(c10::TensorImpl* impl) {
   do {                                                                   \
     mluOpStatus_t status = EXPR;                                         \
     if (status != MLUOP_STATUS_SUCCESS) {                                \
-      CNLOG(ERROR) << "";                                                \
+      LOG(ERROR) << "";                                                \
       TORCH_CHECK(false, "MLUOPS error: ", mluOpGetErrorString(status)); \
     }                                                                    \
   } while (0);

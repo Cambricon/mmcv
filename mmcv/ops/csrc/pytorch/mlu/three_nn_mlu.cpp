@@ -13,14 +13,14 @@
 
 void ThreeNNMLUKernelLauncher(int b, int n, int m, const Tensor unknown,
                               const Tensor known, Tensor dist2, Tensor idx) {
-  auto unknown_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto unknown_contiguous = torch_mlu::cnnl_contiguous(
       unknown, unknown.suggest_memory_format());
-  auto known_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto known_contiguous = torch_mlu::cnnl_contiguous(
       known, known.suggest_memory_format());
-  auto dist2_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto dist2_contiguous = torch_mlu::cnnl_contiguous(
       dist2, dist2.suggest_memory_format());
   auto idx_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(idx, idx.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(idx, idx.suggest_memory_format());
 
   MluOpTensorDescriptor unknown_desc, known_desc, dist2_desc, idx_desc;
   unknown_desc.set(unknown_contiguous);

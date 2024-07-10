@@ -19,9 +19,9 @@ void ROIAlignForwardMLUKernelLauncher(Tensor input, Tensor rois, Tensor output,
   // params check
   TORCH_CHECK(pool_mode == 1, "pool_mode only supports 'avg' currently");
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
+      torch_mlu::get_channels_last_memory_format(input.dim());
   auto input_tensor =
-      torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
+      torch_mlu::cnnl_contiguous(input, memory_format);
 
   auto num_rois = rois.size(0);
   auto channels = input.size(1);
@@ -56,9 +56,9 @@ void ROIAlignForwardMLUKernelLauncher(Tensor input, Tensor rois, Tensor output,
   auto handle = mluOpGetCurrentHandle();
   if (pool_mode == 0) {
     auto argmax_y_contiguous =
-        torch_mlu::cnnl::ops::cnnl_contiguous(argmax_y, memory_format);
+        torch_mlu::cnnl_contiguous(argmax_y, memory_format);
     auto argmax_x_contiguous =
-        torch_mlu::cnnl::ops::cnnl_contiguous(argmax_x, memory_format);
+        torch_mlu::cnnl_contiguous(argmax_x, memory_format);
     auto argmax_x_impl = torch_mlu::getMluTensorImpl(argmax_x_contiguous);
     auto argmax_y_impl = torch_mlu::getMluTensorImpl(argmax_y_contiguous);
     auto argmax_x_ptr = torch_mlu::mlu_data_ptr(argmax_x_impl);
@@ -93,8 +93,8 @@ void ROIAlignBackwardMLUKernelLauncher(Tensor grad, Tensor rois,
   int height = grad_input.size(2);
   int width = grad_input.size(3);
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad.dim());
-  auto grad_ = torch_mlu::cnnl::ops::cnnl_contiguous(grad, memory_format);
+      torch_mlu::get_channels_last_memory_format(grad.dim());
+  auto grad_ = torch_mlu::cnnl_contiguous(grad, memory_format);
   auto grad_input_ = at::empty({batch_size, channels, height, width},
                                grad.options(), memory_format)
                          .zero_();
@@ -127,9 +127,9 @@ void ROIAlignBackwardMLUKernelLauncher(Tensor grad, Tensor rois,
   auto handle = mluOpGetCurrentHandle();
   if (pool_mode == 0) {
     auto argmax_y_contiguous =
-        torch_mlu::cnnl::ops::cnnl_contiguous(argmax_y, memory_format);
+        torch_mlu::cnnl_contiguous(argmax_y, memory_format);
     auto argmax_x_contiguous =
-        torch_mlu::cnnl::ops::cnnl_contiguous(argmax_x, memory_format);
+        torch_mlu::cnnl_contiguous(argmax_x, memory_format);
     auto argmax_x_impl = torch_mlu::getMluTensorImpl(argmax_x_contiguous);
     auto argmax_y_impl = torch_mlu::getMluTensorImpl(argmax_y_contiguous);
     auto argmax_x_ptr = torch_mlu::mlu_data_ptr(argmax_x_impl);

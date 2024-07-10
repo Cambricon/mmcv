@@ -47,10 +47,10 @@ void ROIPoolForwardMLUKernelLauncher(Tensor input, Tensor rois, Tensor output,
   auto rois_num = output.size(0);
 
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
-  auto input_ = torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format);
+      torch_mlu::get_channels_last_memory_format(input.dim());
+  auto input_ = torch_mlu::cnnl_contiguous(input, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
 
   at::Tensor output_ =
       at::empty({rois_num, channels, pooled_height, pooled_width},
@@ -143,16 +143,16 @@ void ROIPoolBackwardMLUKernelLauncher(Tensor grad_output, Tensor rois,
   }
 
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_output.dim());
+      torch_mlu::get_channels_last_memory_format(grad_output.dim());
   auto grad_output_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(grad_output, memory_format);
-  auto argmax_ = torch_mlu::cnnl::ops::cnnl_contiguous(argmax, memory_format);
+      torch_mlu::cnnl_contiguous(grad_output, memory_format);
+  auto argmax_ = torch_mlu::cnnl_contiguous(argmax, memory_format);
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_input.dim());
+      torch_mlu::get_channels_last_memory_format(grad_input.dim());
   auto grad_input_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(grad_input, memory_format);
+      torch_mlu::cnnl_contiguous(grad_input, memory_format);
 
   // get tensor impl
   auto grad_output_impl = torch_mlu::getMluTensorImpl(grad_output_);

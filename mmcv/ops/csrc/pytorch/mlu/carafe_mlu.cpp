@@ -40,19 +40,19 @@ void CARAFEForwardMLUKernelLauncher(const Tensor input, const Tensor mask,
 
   // convert NCHW to NHWC
   auto memory_format_input_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(input.dim());
+      torch_mlu::get_channels_last_memory_format(input.dim());
   auto rinput_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(input, memory_format_input_nhwc);
+      torch_mlu::cnnl_contiguous(input, memory_format_input_nhwc);
 
   auto memory_format_mask_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(mask.dim());
+      torch_mlu::get_channels_last_memory_format(mask.dim());
   auto rmask_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(mask, memory_format_mask_nhwc);
+      torch_mlu::cnnl_contiguous(mask, memory_format_mask_nhwc);
 
   auto memory_format_output_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(output.dim());
+      torch_mlu::get_channels_last_memory_format(output.dim());
   auto routput_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(output, memory_format_output_nhwc);
+      torch_mlu::cnnl_contiguous(output, memory_format_output_nhwc);
 
   // set tensor descriptor
   MluOpTensorDescriptor input_desc, mask_desc, output_desc;
@@ -109,29 +109,29 @@ void CARAFEBackwardMLUKernelLauncher(
 
   // convert NCHW to NHWC
   auto memory_format_input_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(rinput.dim());
+      torch_mlu::get_channels_last_memory_format(rinput.dim());
   auto rinput_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rinput, memory_format_input_nhwc);
+      torch_mlu::cnnl_contiguous(rinput, memory_format_input_nhwc);
 
   auto memory_format_mask_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(mask.dim());
+      torch_mlu::get_channels_last_memory_format(mask.dim());
   auto rmask_ =
-      torch_mlu::cnnl::ops::cnnl_contiguous(mask, memory_format_mask_nhwc);
+      torch_mlu::cnnl_contiguous(mask, memory_format_mask_nhwc);
 
   auto memory_format_grad_output_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_output.dim());
-  auto rgrad_output_ = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::get_channels_last_memory_format(grad_output.dim());
+  auto rgrad_output_ = torch_mlu::cnnl_contiguous(
       grad_output, memory_format_grad_output_nhwc);
 
   auto memory_format_grad_input_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_input.dim());
-  auto rgrad_input_ = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::get_channels_last_memory_format(grad_input.dim());
+  auto rgrad_input_ = torch_mlu::cnnl_contiguous(
                           grad_input, memory_format_grad_input_nhwc)
                           .zero_();
 
   auto memory_format_grad_mask_nhwc =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(grad_mask.dim());
-  auto rgrad_mask_ = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::get_channels_last_memory_format(grad_mask.dim());
+  auto rgrad_mask_ = torch_mlu::cnnl_contiguous(
       grad_mask, memory_format_grad_mask_nhwc);
 
   // set tensor descriptor

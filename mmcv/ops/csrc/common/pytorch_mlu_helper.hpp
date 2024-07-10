@@ -13,7 +13,6 @@
 #define PYTORCH_MLU_HELPER_HPP_
 
 #ifdef MMCV_WITH_MLU
-#include "utils/cnlog.h"
 #include "aten/utils/cnnl_util.h"
 #include "aten/utils/types.h"
 #include "c10/core/ScalarTypeToTypeMeta.h"

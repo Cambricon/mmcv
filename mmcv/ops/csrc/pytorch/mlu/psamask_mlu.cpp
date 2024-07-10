@@ -20,8 +20,8 @@ void PSAMaskForwardMLUKernelLauncher(const int psa_type, const Tensor x,
   int y_c = y.size(1);
 
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(x.dim());
-  auto x_tensor = torch_mlu::cnnl::ops::cnnl_contiguous(x, memory_format);
+      torch_mlu::get_channels_last_memory_format(x.dim());
+  auto x_tensor = torch_mlu::cnnl_contiguous(x, memory_format);
   at::Tensor y_tmp =
       at::empty({num_, y_c, h_feature, w_feature}, x.options(), memory_format);
 
@@ -50,8 +50,8 @@ void PSAMaskBackwardMLUKernelLauncher(const int psa_type, const Tensor dy,
   int dx_c = dx.size(1);
 
   auto memory_format =
-      torch_mlu::cnnl::ops::get_channels_last_memory_format(dy.dim());
-  auto dy_tensor = torch_mlu::cnnl::ops::cnnl_contiguous(dy, memory_format);
+      torch_mlu::get_channels_last_memory_format(dy.dim());
+  auto dy_tensor = torch_mlu::cnnl_contiguous(dy, memory_format);
   at::Tensor dx_tmp = at::empty({num_, dx_c, h_feature, w_feature},
                                 dy.options(), memory_format);
 

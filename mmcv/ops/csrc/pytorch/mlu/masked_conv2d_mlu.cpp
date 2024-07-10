@@ -63,7 +63,7 @@ void MaskedIm2colForwardMLUKernelLauncher(const Tensor im,
               "col.numel() should be less than 2147483648, got ", col.numel(),
               ".");
 
-  auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
+  auto im_contiguous = torch_mlu::cnnl_contiguous(im, im.suggest_memory_format());
   
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);
@@ -149,8 +149,8 @@ void MaskedCol2imForwardMLUKernelLauncher(const Tensor col,
               "col.numel() should be less than 2147483648, got ", col.numel(),
               ".");
 
-  auto im_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(im, im.suggest_memory_format());
-  auto col_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(col);
+  auto im_contiguous = torch_mlu::cnnl_contiguous(im, im.suggest_memory_format());
+  auto col_contiguous = torch_mlu::cnnl_contiguous(col);
 
   // get ptr of tensors
   auto im_impl = torch_mlu::getMluTensorImpl(im_contiguous);

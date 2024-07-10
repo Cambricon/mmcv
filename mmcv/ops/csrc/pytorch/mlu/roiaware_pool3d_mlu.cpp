@@ -21,16 +21,16 @@ void RoiawarePool3dForwardMLUKernelLauncher(
   auto handle = mluOpGetCurrentHandle();
 
   auto rois_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(rois, rois.suggest_memory_format());
+      torch_mlu::cnnl_contiguous(rois, rois.suggest_memory_format());
   auto pts_contiguous =
-      torch_mlu::cnnl::ops::cnnl_contiguous(pts, pts.suggest_memory_format());
-  auto pts_feature_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+      torch_mlu::cnnl_contiguous(pts, pts.suggest_memory_format());
+  auto pts_feature_contiguous = torch_mlu::cnnl_contiguous(
       pts_feature, pts_feature.suggest_memory_format());
-  auto argmax_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto argmax_contiguous = torch_mlu::cnnl_contiguous(
       argmax, argmax.suggest_memory_format());
-  auto pts_idx_of_voxels_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto pts_idx_of_voxels_contiguous = torch_mlu::cnnl_contiguous(
       pts_idx_of_voxels, pts_idx_of_voxels.suggest_memory_format());
-  auto pooled_features_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto pooled_features_contiguous = torch_mlu::cnnl_contiguous(
       pooled_features, pooled_features.suggest_memory_format());
 
   MluOpTensorDescriptor rois_desc, pts_desc, pts_feature_desc, argmax_desc,
@@ -68,7 +68,7 @@ void RoiawarePool3dForwardMLUKernelLauncher(
   auto pts_idx_of_voxels_ptr = torch_mlu::mlu_data_ptr(pts_idx_of_voxels_impl);
   auto pooled_features_ptr = torch_mlu::mlu_data_ptr(pooled_features_impl);
 
-  CNLOG(INFO) << "Call mluOpRoiawarePool3dForward().";
+  LOG(INFO) << "Call mluOpRoiawarePool3dForward().";
   TORCH_MLUOP_CHECK(mluOpRoiawarePool3dForward(
       handle, pool_method, boxes_num, pts_num, channels, rois_desc.desc(),
       rois_ptr, pts_desc.desc(), pts_ptr, pts_feature_desc.desc(),
@@ -105,13 +105,13 @@ void RoiawarePool3dBackwardMLUKernelLauncher(
     const Tensor argmax, const Tensor grad_out, Tensor grad_in) {
   // get compute handle
   auto handle = mluOpGetCurrentHandle();
-  auto pts_idx_of_voxels_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto pts_idx_of_voxels_contiguous = torch_mlu::cnnl_contiguous(
       pts_idx_of_voxels, pts_idx_of_voxels.suggest_memory_format());
-  auto argmax_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto argmax_contiguous = torch_mlu::cnnl_contiguous(
       argmax, argmax.suggest_memory_format());
-  auto grad_out_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto grad_out_contiguous = torch_mlu::cnnl_contiguous(
       grad_out, grad_out.suggest_memory_format());
-  auto grad_in_contiguous = torch_mlu::cnnl::ops::cnnl_contiguous(
+  auto grad_in_contiguous = torch_mlu::cnnl_contiguous(
       grad_in, grad_in.suggest_memory_format());
 
   MluOpTensorDescriptor pts_idx_of_voxels_desc, argmax_desc, grad_out_desc,
@@ -133,7 +133,7 @@ void RoiawarePool3dBackwardMLUKernelLauncher(
   auto grad_out_ptr = torch_mlu::mlu_data_ptr(grad_out_impl);
   auto grad_in_ptr = torch_mlu::mlu_data_ptr(grad_in_impl);
 
-  CNLOG(INFO) << "Call mluOpRoiawarePool3dBackward().";
+  LOG(INFO) << "Call mluOpRoiawarePool3dBackward().";
   TORCH_MLUOP_CHECK(mluOpRoiawarePool3dBackward(
       handle, pool_method, boxes_num, out_x, out_y, out_z, channels,
       max_pts_each_voxel, pts_idx_of_voxels_desc.desc(), pts_idx_of_voxels_ptr,
