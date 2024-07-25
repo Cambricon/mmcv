@@ -19,6 +19,7 @@
 #include "aten/cnnl/cnnlHandle.h"
 #include "aten/cnnl/cnnlTensorDescriptors.h"
 #include "framework/core/MLUStream.h"
+#include "framework/core/caching_allocator.h"
 
 using at::IntArrayRef;
 using at::Tensor;
@@ -31,6 +32,7 @@ inline void* mlu_data_ptr(c10::TensorImpl* impl) {
 }
 } // namespace torch_mlu
 #endif
+
 
 #include "mlu_op.h"
 #include "pytorch_device_registry.hpp"
@@ -78,6 +80,20 @@ mluOpDataType_t getMluOpDataType(const caffe2::TypeMeta& data_type);
 mluOpTensorLayout_t getMluOpSuggestLayout(const at::Tensor& input);
 mluOpReduceMode_t getMluOpReduceMode(const reduce_t reduce_type);
 
+std::vector<int64_t> modify_dims_based_on_layout(const at::IntArrayRef& dim,
+            const c10::MemoryFormat memory_format);
+
+std::vector<int64_t> get_contiguous_strides(const at::IntArrayRef& sizes,
+             c10::MemoryFormat memory_format = c10::MemoryFormat::Contiguous);
+
+std::vector<int64_t> get_channels_last_strides(const at::IntArrayRef& sizes);
+
+std::vector<int64_t> get_channels_first_strides(const at::IntArrayRef& sizes);
+
+std::vector<int64_t> get_channels_last_strides_1d(const at::IntArrayRef& sizes);
+
+bool is_copy_necessary(const at::Tensor& output, const at::Tensor& output_contiguous);
+
 class MluOpTensorDescriptor {
  public:
   MluOpTensorDescriptor() {
@@ -89,6 +105,48 @@ class MluOpTensorDescriptor {
 
   void set(at::Tensor);
   void set_with_layout(at::Tensor, mluOpTensorLayout_t layout);
+
+  void set(at::Tensor t,
+           std::vector<long int> shape_info,
+           std::vector<long int> stride_info,
+           mluOpTensorLayout_t layout = MLUOP_LAYOUT_ARRAY) {
+    const int64_t t_dim = shape_info.size();
+    TORCH_CHECK(t_dim == stride_info.size(), "shape size need equal to stride size.");
+
+    auto data_type = getMluOpDataType(t.dtype());
+    auto setTensorDesc = [&](const int64_t dim,
+                             const int64_t* size,
+                             const int64_t* stride) -> void {
+      TORCH_MLUOP_CHECK(mluOpSetTensorDescriptorEx_v2(mut_desc(),
+                                                      layout,
+                                                      data_type,
+                                                      dim,
+                                                      size,
+                                                      stride));
+    };
+    if (!t_dim) {
+        int64_t dim_array[1] = {1};
+        setTensorDesc(1, dim_array, dim_array);
+        return;
+    }
+    if (std::is_same<typename std::decay<long int>::type, int64_t>::value == true) {
+      setTensorDesc(t_dim, shape_info.data(), stride_info.data());
+    } else {
+      std::vector<int64_t> real_shape_info;
+      std::vector<int64_t> real_stride_info;
+      real_shape_info.reserve(t_dim);
+      real_stride_info.reserve(t_dim);
+      for (int i = 0; i < t_dim; i++) {
+        real_shape_info.push_back(shape_info[i]);
+        real_stride_info.push_back(stride_info[i]);
+      }
+
+      setTensorDesc(t_dim, real_shape_info.data(), real_stride_info.data());
+    }
+  }
+
+  mluOpTensorDescriptor_t mut_desc();
+
   mluOpTensorDescriptor_t desc() { return desc_; }
 
  private:

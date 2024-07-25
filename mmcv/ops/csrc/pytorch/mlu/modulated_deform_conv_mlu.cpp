@@ -28,6 +28,9 @@ void modulated_deform_conv_forward_mlu(
   int stride[2] = {(int)stride_h, (int)stride_w};
   int dilation[2] = {(int)dilation_h, (int)dilation_w};
   int im2col_step = input.size(0);
+
+  // get current handle
+  auto handle = mluOpGetCurrentHandle();
   
   // set to contiguous
   auto memory_format =
@@ -39,33 +42,32 @@ void modulated_deform_conv_forward_mlu(
   auto mask_contiguous = torch_mlu::cnnl_contiguous(mask, memory_format);
   auto output_contiguous = torch_mlu::cnnl_contiguous(output, memory_format);
 
-  // get current handle
-  auto handle = mluOpGetCurrentHandle();
-
   // set tensor descriptor
   MluOpDCNDescriptor dcn_desc;
   MluOpTensorDescriptor input_desc, offset_desc, weight_desc, bias_desc,
       mask_desc, output_desc;
-  input_desc.set_with_layout(input_contiguous, MLUOP_LAYOUT_NHWC);
-  offset_desc.set_with_layout(offset_contiguous, MLUOP_LAYOUT_NHWC);
-  weight_desc.set_with_layout(weight_contiguous, MLUOP_LAYOUT_NHWC);
-  mask_desc.set_with_layout(mask_contiguous, MLUOP_LAYOUT_NHWC);
-  output_desc.set_with_layout(output_contiguous, MLUOP_LAYOUT_NHWC);
-  
-  // bias Tensor size need be same with output Tensor channel size.
-  void* bias_ptr = nullptr;
-  mluOpTensorDescriptor_t bias_desc_ = NULL;
-  if (bias.defined() && bias.dim() == 1 && bias.size(0) == output.size(1)) {
-    bias_desc.set_with_layout(bias_contiguous, MLUOP_LAYOUT_ARRAY);
-    auto bias_impl = torch_mlu::getMluTensorImpl(bias_contiguous);
-    auto bias_ptr = torch_mlu::mlu_data_ptr(bias_impl);
-    bias_desc_ = bias_desc.desc();
-  }
-
+  auto desc_set = [&](const at::Tensor& t,
+                      MluOpTensorDescriptor& t_desc,
+                      mluOpTensorLayout_t layout) {
+    auto shape_vec = modify_dims_based_on_layout(t.sizes().vec(), memory_format);
+    auto stride_vec = get_contiguous_strides(shape_vec);
+    t_desc.set(t, shape_vec, stride_vec, layout);
+  };
+  // prepare desc
+  mluOpTensorLayout_t layout = MLUOP_LAYOUT_NHWC;
+  desc_set(input_contiguous, input_desc, layout);
+  desc_set(offset_contiguous, offset_desc, layout);
+  desc_set(weight_contiguous, weight_desc, layout);
+  desc_set(mask_contiguous, mask_desc, layout);
+  desc_set(output_contiguous, output_desc, layout);
+  mluOpSetTensorDescriptorOnchipDataType(output_desc.desc(), getMluOpDataType(output.dtype()));
   // set dcn descriptor
   dcn_desc.set(input.dim(), padding, stride, dilation,
 	       deformable_group, group, im2col_step, MLUOP_DTYPE_FLOAT);
-
+  // set onchip dtype
+  mluOpSetTensorDescriptorOnchipDataType(input_desc.desc(), getMluOpDataType(input.dtype()));
+  mluOpSetTensorDescriptorOnchipDataType(offset_desc.desc(), getMluOpDataType(offset.dtype()));
+  mluOpSetTensorDescriptorOnchipDataType(weight_desc.desc(), getMluOpDataType(weight.dtype()));
   //get ptr of tensors
   auto input_impl = torch_mlu::getMluTensorImpl(input_contiguous);
   auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
@@ -77,20 +79,31 @@ void modulated_deform_conv_forward_mlu(
   auto mask_ptr = torch_mlu::mlu_data_ptr(mask_impl);
   auto output_impl = torch_mlu::getMluTensorImpl(output_contiguous);
   auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
+  // bias Tensor size need be same with output Tensor channel size.
+  void* bias_ptr = nullptr;
+  mluOpTensorDescriptor_t bias_desc_ = NULL;
+  if (with_bias) {
+    bias_desc.set_with_layout(bias_contiguous, MLUOP_LAYOUT_ARRAY);
+    auto bias_impl = torch_mlu::getMluTensorImpl(bias_contiguous);
+    bias_ptr = torch_mlu::mlu_data_ptr(bias_impl);
+    bias_desc_ = bias_desc.desc();
+  }
 
   // allocate workspace
   size_t workspace_size = 0;
   TORCH_MLUOP_CHECK(mluOpGetDCNForwardWorkspaceSize(handle, dcn_desc.desc(),
       input_desc.desc(), offset_desc.desc(), mask_desc.desc(),
       weight_desc.desc(), bias_desc_, output_desc.desc(), &workspace_size));
-  auto workspace = at::empty(workspace_size, input.options().dtype(at::ScalarType::Char));
-  auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
+  auto workspace_ptr = torch_mlu::MLUCachingAllocator::get()->allocate(workspace_size);
 
   TORCH_MLUOP_CHECK(mluOpDCNForward(handle, dcn_desc.desc(), input_desc.desc(),
       input_ptr, offset_desc.desc(), offset_ptr, mask_desc.desc(), mask_ptr,
-      weight_desc.desc(), weight_ptr, bias_desc_, bias_ptr, workspace_ptr,
+      weight_desc.desc(), weight_ptr, bias_desc_, bias_ptr, workspace_ptr.get(),
       workspace_size, output_desc.desc(), output_ptr));
+
+  if (is_copy_necessary(output, output_contiguous)) {
+    output.copy_(output_contiguous);
+  }
 }
 
 void modulated_deform_conv_backward_mlu(
@@ -142,26 +155,40 @@ void modulated_deform_conv_backward_mlu(
   // bias Tensor size need be same with grad Tensor channel size.
   void* grad_bias_ptr = nullptr;
   mluOpTensorDescriptor_t grad_bias_desc_ = NULL;
-  if (bias.defined() && bias.dim() == 1 && bias.size(0) == grad_output.size(1)) {
+  if (with_bias) {
     grad_bias_desc.set_with_layout(grad_bias_contiguous, MLUOP_LAYOUT_ARRAY);
     auto grad_bias_impl = torch_mlu::getMluTensorImpl(grad_bias_contiguous);
-    auto grad_bias_ptr = torch_mlu::mlu_data_ptr(grad_bias_impl);
+    grad_bias_ptr = torch_mlu::mlu_data_ptr(grad_bias_impl);
     grad_bias_desc_ = grad_bias_desc.desc();
   }
   // get current handle
   auto handle = mluOpGetCurrentHandle();
-  grad_desc.set_with_layout(grad_contiguous, MLUOP_LAYOUT_NHWC);
-  input_desc.set_with_layout(input_contiguous, MLUOP_LAYOUT_NHWC);
-  offset_desc.set_with_layout(offset_contiguous, MLUOP_LAYOUT_NHWC);
-  weight_desc.set_with_layout(weight_contiguous, MLUOP_LAYOUT_NHWC);
-  mask_desc.set_with_layout(mask_contiguous, MLUOP_LAYOUT_NHWC);
-  grad_input_desc.set_with_layout(grad_input_contiguous, MLUOP_LAYOUT_NHWC);
-  grad_offset_desc.set_with_layout(grad_offset_contiguous, MLUOP_LAYOUT_NHWC);
-  grad_weight_desc.set_with_layout(grad_weight_contiguous, MLUOP_LAYOUT_NHWC);
-  grad_mask_desc.set_with_layout(grad_mask_contiguous, MLUOP_LAYOUT_NHWC);
+  auto desc_set = [&](const at::Tensor& t,
+                      MluOpTensorDescriptor& t_desc,
+                      mluOpTensorLayout_t layout) {
+    auto shape_vec = modify_dims_based_on_layout(t.sizes().vec(), memory_format);
+    auto stride_vec = get_contiguous_strides(shape_vec);
+    t_desc.set(t, shape_vec, stride_vec, layout);
+  };
+  // prepare desc
+  mluOpTensorLayout_t layout = MLUOP_LAYOUT_NHWC;
+  desc_set(input_contiguous, input_desc, layout);
+  desc_set(offset_contiguous, offset_desc, layout);
+  desc_set(weight_contiguous, weight_desc, layout);
+  desc_set(mask_contiguous, mask_desc, layout);
+  desc_set(grad_contiguous, grad_desc, layout);
+  desc_set(grad_input_contiguous, grad_input_desc, layout);
+  desc_set(grad_offset_contiguous, grad_offset_desc, layout);
+  desc_set(grad_weight_contiguous, grad_weight_desc, layout);
+  desc_set(grad_mask_contiguous, grad_mask_desc, layout);
   // set dcn descriptor
   dcn_desc.set(input.dim(), padding, stride, dilation,
 	       deformable_group, group, im2col_step, MLUOP_DTYPE_FLOAT);
+  // set onchip dtype
+  mluOpSetTensorDescriptorOnchipDataType(grad_input_desc.desc(), getMluOpDataType(grad_input.dtype()));
+  //mluOpSetTensorDescriptorOnchipDataType(offset_desc.desc(), getMluOpDataType(offset.dtype()));
+  mluOpSetTensorDescriptorOnchipDataType(input_desc.desc(), getMluOpDataType(input.dtype()));
+  mluOpSetTensorDescriptorOnchipDataType(weight_desc.desc(), getMluOpDataType(weight.dtype()));
   // set ptrs
   auto grad_ptr = torch_mlu::mlu_data_ptr(grad_impl); 
   auto input_ptr = torch_mlu::mlu_data_ptr(input_impl);
@@ -187,12 +214,7 @@ void modulated_deform_conv_backward_mlu(
                         /* grad_mask_desc   */ grad_mask_desc.desc(),
                         /* workspace_size   */ &data_workspace_size));
   // mallc data workspace mlu memory
-  void* data_workspace_ptr = nullptr;
-  at::Tensor data_workspace;
-  data_workspace = at::empty(data_workspace_size,
-                    input.options().dtype(at::ScalarType::Char));
-  auto data_workspace_impl = torch_mlu::getMluTensorImpl(data_workspace);
-  data_workspace_ptr = torch_mlu::mlu_data_ptr(data_workspace_impl);
+  auto data_workspace_ptr = torch_mlu::MLUCachingAllocator::get()->allocate(data_workspace_size);
   TORCH_MLUOP_CHECK(mluOpDCNBackwardData(
                         /* handle           */ handle,
                         /* dcn_desc         */ dcn_desc.desc(),
@@ -206,7 +228,7 @@ void modulated_deform_conv_backward_mlu(
                         /* weight_ptr       */ weight_ptr,
                         /* grad_output_desc */ grad_desc.desc(),
                         /* grad_output_ptr  */ grad_ptr,
-                        /* workspace_ptr    */ data_workspace_ptr,
+                        /* workspace_ptr    */ data_workspace_ptr.get(),
                         /* workspace_size   */ data_workspace_size,
                         /* grad_input_desc  */ grad_input_desc.desc(),
                         /* grad_input_ptr   */ grad_input_ptr,
@@ -227,12 +249,7 @@ void modulated_deform_conv_backward_mlu(
                         /* grad_bias_desc    */ grad_bias_desc_,
                         /* workspace_size    */ &weight_workspace_size));
   // malloc weight workspace mlu memory
-  void* weight_workspace_ptr = nullptr;
-  at::Tensor weight_workspace;
-  weight_workspace = at::empty(weight_workspace_size,
-                        input.options().dtype(at::ScalarType::Char));
-  auto weight_workspace_impl = torch_mlu::getMluTensorImpl(weight_workspace);
-  weight_workspace_ptr = torch_mlu::mlu_data_ptr(weight_workspace_impl);
+  auto weight_workspace_ptr = torch_mlu::MLUCachingAllocator::get()->allocate(weight_workspace_size);
   TORCH_MLUOP_CHECK(mluOpDCNBackwardWeight(
                         /* handle            */ handle,
                         /* dcn_desc          */ dcn_desc.desc(),
@@ -244,12 +261,25 @@ void modulated_deform_conv_backward_mlu(
                         /* mask_ptr          */ mask_ptr,
                         /* grad_output_desc  */ grad_desc.desc(),
                         /* grad_output_ptr   */ grad_ptr,
-                        /* workspace         */ weight_workspace_ptr,
+                        /* workspace         */ weight_workspace_ptr.get(),
                         /* workspace_size    */ weight_workspace_size,
                         /* grad_weight_desc  */ grad_weight_desc.desc(),
                         /* grad_weigth_ptr   */ grad_weight_ptr,
                         /* grad_bias_desc    */ grad_bias_desc_,
                         /* grad_bias_ptr     */ grad_bias_ptr));
+  if (is_copy_necessary(grad_input, grad_input_contiguous)) {
+    grad_input.copy_(grad_input_contiguous);
+  }
+  if (is_copy_necessary(grad_offset, grad_offset_contiguous)) {
+    grad_offset.copy_(grad_offset_contiguous);
+  }
+  if (is_copy_necessary(grad_weight, grad_weight_contiguous)) {
+    grad_weight.copy_(grad_weight_contiguous);
+  }
+  if (is_copy_necessary(grad_mask, grad_mask_contiguous)) {
+    grad_mask.copy_(grad_mask_contiguous);
+  }
+
 }
 
 void modulated_deform_conv_forward_impl(

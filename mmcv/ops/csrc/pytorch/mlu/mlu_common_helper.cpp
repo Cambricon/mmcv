@@ -11,6 +11,135 @@
  *************************************************************************/
 #include "mlu_common_helper.h"
 
+mluOpTensorDescriptor_t MluOpTensorDescriptor::mut_desc() {
+  if (!desc_) {
+    mluOpCreateTensorDescriptor(&desc_);
+  }
+  return desc_;
+}
+
+// for now, this function is used to decide whether output and output_contiguous are the same
+bool is_copy_necessary(const at::Tensor& output, const at::Tensor& output_contiguous) {
+  if (!output.defined() && !output_contiguous.defined()) return false;
+  TORCH_CHECK(output.defined() && output_contiguous.defined(),
+    "One of those two tensor is undefined.");
+  TORCH_CHECK(output.sizes() == output_contiguous.sizes() ,
+                      "sizes of two input tensors are not the same.");
+
+  // check if underlying data and strides of these tensors are the same.
+  if (output.data_ptr() != output_contiguous.data_ptr() ||
+          output.strides() != output_contiguous.strides()) {
+    return true;
+  }
+
+  // check if dtype are the same.
+  if (output.options().dtype() != output_contiguous.options().dtype()) {
+    return true;
+  }
+
+  return false;
+}
+
+std::vector<int64_t>
+get_contiguous_strides(const at::IntArrayRef& sizes,
+                       c10::MemoryFormat memory_format) {
+  switch (memory_format) {
+    case c10::MemoryFormat::Contiguous:
+      return get_channels_first_strides(sizes);
+    case c10::MemoryFormat::ChannelsLast:
+    case c10::MemoryFormat::ChannelsLast3d:
+      return get_channels_last_strides(sizes);
+    default:
+      TORCH_CHECK(false,
+                      "get_contiguous_strides doesn't support memory_format ",
+                      memory_format);
+  }
+}
+
+std::vector<int64_t> modify_dims_based_on_layout(const at::IntArrayRef& dim,
+            const c10::MemoryFormat memory_format) {
+  // dimension is 0, return.
+  // dimension == 1 and numel == 1, return.
+  if (!dim.size() || (dim.size() ==1 && dim[0] == 1)) {
+      return dim.vec();
+  }
+  std::vector<int64_t> target_dim;
+  static std::vector<int> cl_dim_order{0, 2, 3, 1};
+  static std::vector<int> cl3d_dim_order{0, 2, 3, 4, 1};
+  // trans tensor/stride size to cnnl desc size/stride.
+  auto modify_dims_pos = [](const std::vector<int>& dim_order,
+                            const at::IntArrayRef& input,
+                            std::vector<int64_t>& out) {
+    for (const auto& item : dim_order) {
+      out.push_back(input[item]);
+    }
+  };
+  switch (memory_format) {
+    case c10::MemoryFormat::ChannelsLast:
+      TORCH_CHECK(dim.size() == 4, "dim size must be 4 when memory_format ",
+                      "is ChannelsLast.");
+      modify_dims_pos(cl_dim_order, dim, target_dim);
+      break;
+    case c10::MemoryFormat::ChannelsLast3d:
+      TORCH_CHECK(dim.size() == 5, "dim size must be 5 when memory_format is ",
+                      "ChannelsLast3d.");
+      modify_dims_pos(cl3d_dim_order, dim, target_dim);
+      break;
+    case c10::MemoryFormat::Contiguous:
+      target_dim = std::move(dim.vec());
+      break;
+    default:
+      TORCH_CHECK(false, "memory format not support.");
+      break;
+  }
+  return target_dim;
+}
+
+std::vector<int64_t> get_channels_last_strides(const at::IntArrayRef& sizes) {
+  switch (sizes.size()) {
+    case 5:
+      return c10::get_channels_last_strides_3d(sizes);
+    case 4:
+      return c10::get_channels_last_strides_2d(sizes);
+    case 3:
+      return get_channels_last_strides_1d(sizes);
+    default:
+      TORCH_INTERNAL_ASSERT(false, "ChannelsLast doesn't support size ", sizes.size());
+  }
+}
+
+std::vector<int64_t> get_channels_first_strides(const at::IntArrayRef& sizes) {
+  auto dim = sizes.size();
+  std::vector<int64_t> strides(dim);
+  if (dim > 0) {
+    int last_idx = dim - 1;
+    strides[last_idx] = 1;
+    for (auto i = last_idx - 1; i >= 0; --i) {
+      strides[i] = strides[i + 1] * std::max<int64_t>(sizes[i + 1], 1);
+    }
+  }
+  return strides;
+}
+
+std::vector<int64_t> get_channels_last_strides_1d(const at::IntArrayRef& sizes) {
+  std::vector<int64_t> strides(sizes.size());
+  switch (sizes.size()) {
+    // NLC
+    case 3:
+      strides[1] = 1;
+      strides[2] = sizes[1];
+      strides[0] = strides[2] * sizes[2];
+      return strides;
+    // LC
+    case 2:
+      strides[0] = 1;
+      strides[1] = sizes[0];
+      return strides;
+    default:
+      TORCH_INTERNAL_ASSERT(false, "ChannelsLast1d doesn't support size ", sizes.size());
+  }
+}
+
 // Descriptors
 mluOpDataType_t getMluOpDataType(const caffe2::TypeMeta& data_type) {
   const std::map<std::string, mluOpDataType_t> mapping_type = {
