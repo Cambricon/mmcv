@@ -4,9 +4,11 @@
   "build_requires": {
     "catch_210": ["1.21.0"],
     "catch_230": ["1.21.0"],
+    "catch_240": ["1.21.0"],
     "mluops": ["v1.2.0"]},
   "args_combination": {
     "wheel1": ["2.1.0", "3.10"],
-    "wheel2": ["2.3.0", "3.10"]},
+    "wheel2": ["2.3.0", "3.10"],
+    "wheel3": ["2.4.0", "3.10"]},
   "package_type": ["whl", "docs", "src"]
 }
