@@ -66,7 +66,7 @@ def get_mlu_version():
         major, minor, patch = version_string.split('.')
         return f"pt{major}{minor}"
     pt_version = convert_to_pt_version(local_torch_version) 
-    mlu_unique_version = "+" + version_value + "+" + pt_version
+    mlu_unique_version = "+" + version_value + "." + pt_version
     return mluops_version[0], mlu_unique_version
 
 def get_local_mluops_version():
