@@ -1,11 +1,11 @@
 {
-  "version": "v1.5.0",
+  "version": "v1.6.0",
   "official_version": "1.7",
   "build_requires": {
-    "catch_210": ["1.23.0"],
-    "catch_240": ["1.23.0"],
-    "catch_250": ["1.23.0-rc0"],
-    "mluops": ["v1.3.1"]},
+    "catch_210": ["1.24.0"],
+    "catch_240": ["1.24.0"],
+    "catch_250": ["1.24.0"],
+    "mluops": ["v1.4.1"]},
   "args_combination": {
     "wheel1": ["2.1.0", "3.10"],
     "wheel2": ["2.4.0", "3.10"],
