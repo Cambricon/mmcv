@@ -31,25 +31,6 @@ Tensor NMSMLUKernelLauncher(Tensor boxes, Tensor scores, float iou_threshold,
   scores_desc.set(scores_);
   output_desc.set(output);
 
-  // workspace
-  size_t workspace_size = 0;
-  auto handle = mluOpGetCurrentHandle();
-  TORCH_MLUOP_CHECK(mluOpGetNmsWorkspaceSize(
-      handle, boxes_desc.desc(), scores_desc.desc(), &workspace_size));
-  auto workspace = at::empty(workspace_size, boxes.options().dtype(at::kByte));
-
-  // get compute queue
-  auto boxes_impl = torch_mlu::getMluTensorImpl(boxes_);
-  auto boxes_ptr = torch_mlu::mlu_data_ptr(boxes_impl);
-  auto scores_impl = torch_mlu::getMluTensorImpl(scores_);
-  auto scores_ptr = torch_mlu::mlu_data_ptr(scores_impl);
-  auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
-  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
-  auto output_impl = torch_mlu::getMluTensorImpl(output);
-  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
-  auto output_size_impl = torch_mlu::getMluTensorImpl(output_size);
-  auto output_size_ptr = torch_mlu::mlu_data_ptr(output_size_impl);
-
   // nms desc
   mluOpNmsDescriptor_t nms_desc;
   const mluOpNmsBoxPointMode_t box_mode = (mluOpNmsBoxPointMode_t)0;
@@ -67,6 +48,25 @@ Tensor NMSMLUKernelLauncher(Tensor boxes, Tensor scores, float iou_threshold,
       nms_desc, box_mode, output_mode, algo, method_mode, iou_threshold,
       soft_nms_sigma, max_output_size, confidence_threshold, (float)offset,
       input_layout, pad_to_max_output_size));
+
+  // workspace
+  size_t workspace_size = 0;
+  auto handle = mluOpGetCurrentHandle();
+  TORCH_MLUOP_CHECK(mluOpGetNmsWorkspaceSize(
+      handle, nms_desc, boxes_desc.desc(), scores_desc.desc(), &workspace_size));
+  auto workspace = at::empty(workspace_size, boxes.options().dtype(at::kByte));
+
+  // get compute queue
+  auto boxes_impl = torch_mlu::getMluTensorImpl(boxes_);
+  auto boxes_ptr = torch_mlu::mlu_data_ptr(boxes_impl);
+  auto scores_impl = torch_mlu::getMluTensorImpl(scores_);
+  auto scores_ptr = torch_mlu::mlu_data_ptr(scores_impl);
+  auto workspace_impl = torch_mlu::getMluTensorImpl(workspace);
+  auto workspace_ptr = torch_mlu::mlu_data_ptr(workspace_impl);
+  auto output_impl = torch_mlu::getMluTensorImpl(output);
+  auto output_ptr = torch_mlu::mlu_data_ptr(output_impl);
+  auto output_size_impl = torch_mlu::getMluTensorImpl(output_size);
+  auto output_size_ptr = torch_mlu::mlu_data_ptr(output_size_impl);
 
   TORCH_MLUOP_CHECK(mluOpNms(handle, nms_desc, boxes_desc.desc(), boxes_ptr,
                              scores_desc.desc(), scores_ptr, workspace_ptr,
