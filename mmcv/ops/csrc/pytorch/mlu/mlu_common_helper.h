@@ -20,6 +20,7 @@
 #include "aten/cnnl/cnnlTensorDescriptors.h"
 #include "framework/core/MLUStream.h"
 #include "framework/core/caching_allocator.h"
+#include "framework/core/device.h"
 
 using at::IntArrayRef;
 using at::Tensor;
