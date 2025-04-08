@@ -65,8 +65,10 @@ def get_mlu_version():
     def convert_to_pt_version(version_string):
         major, minor, patch = version_string.split('.')
         return f"pt{major}{minor}"
-    pt_version = convert_to_pt_version(local_torch_version) 
-    mlu_unique_version = "+" + version_value + "." + pt_version
+    pt_version = convert_to_pt_version(local_torch_version)
+    def get_abi_version():
+        return ".cxx11.abi" if torch._C._GLIBCXX_USE_CXX11_ABI else ""
+    mlu_unique_version = "+" + version_value + "." + pt_version + get_abi_version()
     return mluops_version[0], mlu_unique_version
 
 def get_local_mluops_version():
@@ -560,6 +562,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Utilities',
     ],
     url='https://github.com/open-mmlab/mmcv',

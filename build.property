@@ -2,11 +2,16 @@
   "version": "v1.8.0",
   "official_version": "1.7",
   "build_requires": {
-    "catch_250": ["1.25.0"],
-    "catch_260": ["1.25.0"],
+    "catch_250": ["1.26.0"],
+    "catch_260": ["1.26.0"],
+    "catch_270": ["1.26.0"],
     "mluops": ["v1.5.0"]},
   "args_combination": {
-    "wheel1": ["2.5.0", "3.10"],
-    "wheel2": ["2.6.0", "3.10"]},
+    "wheel1": ["2.5.0", "3.10", "cxx11"],
+    "wheel2": ["2.5.0", "3.10", "old"],
+    "wheel3": ["2.5.0", "3.11", "cxx11"],
+    "wheel4": ["2.5.0", "3.11", "old"],
+    "wheel5": ["2.6.0", "3.10", "old"],
+    "wheel6": ["2.6.0", "3.11", "old"]},
   "package_type": ["whl", "docs", "src"]
 }
