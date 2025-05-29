@@ -17,7 +17,6 @@
 #include "aten/utils/tensor_util.h"
 #include "aten/utils/types.h"
 #include "aten/cnnl/cnnlHandle.h"
-#include "aten/cnnl/cnnlTensorDescriptors.h"
 #include "framework/core/MLUStream.h"
 #include "framework/core/caching_allocator.h"
 #include "framework/core/device.h"
