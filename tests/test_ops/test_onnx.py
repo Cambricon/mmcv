@@ -35,6 +35,7 @@ class WrapFunction(nn.Module):
         return self.wrapped_function(*args, **kwargs)
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='test requires GPU')
 def test_roialign():
     rt = pytest.importorskip('onnxruntime')
     try:
