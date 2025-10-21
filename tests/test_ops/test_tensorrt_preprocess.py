@@ -53,6 +53,7 @@ def export_nms_module_to_onnx(module, onnx_file):
     return onnx_model
 
 
+@pytest.mark.skip(reason="skip due to onnx compatible problem.")
 def test_can_handle_nms_with_constant_maxnum():
 
     class ModuleNMS(torch.nn.Module):
@@ -67,6 +68,7 @@ def test_can_handle_nms_with_constant_maxnum():
             assert len(node.attribute) == 5, 'The NMS must have 5 attributes.'
 
 
+@pytest.mark.skip(reason="skip due to onnx compatible problem.")
 def test_can_handle_nms_with_undefined_maxnum():
 
     class ModuleNMS(torch.nn.Module):

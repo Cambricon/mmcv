@@ -110,6 +110,7 @@ def test_grid_sample(mode, padding_mode, align_corners):
 
 
 @pytest.mark.parametrize('align_corners', [True, False])
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='test requires GPU')
 def test_bilinear_grid_sample(align_corners):
     from mmcv.ops.point_sample import bilinear_grid_sample
 
@@ -137,6 +138,7 @@ def test_bilinear_grid_sample(align_corners):
                 reason='using torch 1.13.x + mmcv 1.7.1 cause onnx error.')
         ]),
 ])
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='test requires GPU')
 def test_nms(device):
     from mmcv.ops import get_onnxruntime_op_path, nms
     np_boxes = np.array([[6.0, 3.0, 8.0, 7.0], [3.0, 6.0, 9.0, 11.0],
@@ -269,6 +271,7 @@ def test_softnms():
                 reason='using torch 1.13.x + mmcv 1.7.1 cause onnx error.')
         ]),
 ])
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='test requires GPU')
 def test_roialign(device):
     rt = pytest.importorskip('onnxruntime')
     try:
