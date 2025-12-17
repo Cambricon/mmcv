@@ -1,5 +1,5 @@
 {
-  "version": "v1.11.0",
+  "version": "v1.12.0",
   "official_version": "2.1",
   "build_requires": {
     "catch_280": ["1.30.0"],
