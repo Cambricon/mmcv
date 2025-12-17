@@ -3,7 +3,7 @@
   "official_version": "2.1",
   "build_requires": {
     "catch_280": ["1.30.0"],
-    "catch_290": ["1.30.0"],
+    "catch_291": ["1.30.0"],
     "mluops": ["v1.7.0"]},
   "args_combination": {
     "wheel1": ["2.8.0", "3.10", "cxx11"],
