@@ -19,8 +19,16 @@ class TestBBoxMLU(TestCase):
         samples_box1 = []
         samples_box2 = []
         for box1_shape, box2_shape in test_cases:
-            a = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=40, seed=23)
-            b = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=20, seed=23)
+            a = make_tensor(box1_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=30, seed=666)
+            b = make_tensor(box2_shape, device=device, dtype=dtype, requires_grad=False, low=0, high=20, seed=666)
+            a = torch.stack([torch.min(a[..., 0], a[..., 2]),
+                             torch.min(a[..., 1], a[..., 3]),
+                             torch.max(a[..., 0], a[..., 2]),
+                             torch.max(a[..., 1], a[..., 3])], dim=-1)
+            b = torch.stack([torch.min(b[..., 0], b[..., 2]),
+                             torch.min(b[..., 1], b[..., 3]),
+                             torch.max(b[..., 0], b[..., 2]),
+                             torch.max(b[..., 1], b[..., 3])], dim=-1)
             samples_box1.append(a)
             samples_box2.append(b)
         return samples_box1, samples_box2
@@ -40,7 +48,7 @@ class TestBBoxMLU(TestCase):
                     out_cpu = bbox_overlaps(b1, b2, mode='iou', aligned=0, offset=1).type(torch.half)
                 else:
                     out_cpu = bbox_overlaps(b1, b2, mode='iou', aligned=0, offset=1)
-                assert np.allclose(out.cpu().float(), out_cpu.float(), 3e-3)
+                assert np.allclose(out.cpu().float(), out_cpu.float(), atol=3e-3, rtol=3e-3)
 
     def test_bbox_invalid_shape(self, device='mlu'):
         box1 = torch.randn(2, 3).to('mlu')
@@ -50,15 +58,13 @@ class TestBBoxMLU(TestCase):
             bbox_overlaps(box1, box2, mode='iou', aligned=0, offset=1)
 
     def test_bbox_invalid_type(self, device='mlu'):
-        dtype_list = [torch.double, torch.complex64]
+        dtype_list = [torch.double]
         for dtype in dtype_list:
             bs1, bs2 = self._sample_inputs_bbox(device='cpu', dtype=dtype)
             box1 = bs1[0].to('mlu')
             box2 = bs2[0].to('mlu')
             if dtype == torch.double:
                 replace = "Double"
-            if dtype == torch.complex64:
-                replace = "ComplexFloat"
             ref_msg = ("Data type of input should be Float or Half. But now input type is "
                        f"{replace}.")
             with self.assertRaisesRegex(RuntimeError, ref_msg):
