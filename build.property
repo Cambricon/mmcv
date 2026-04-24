@@ -2,8 +2,8 @@
   "version": "v1.14.0",
   "official_version": "1.7",
   "build_requires": {
-    "catch_291": ["1.32.0"],
     "catch_2100": ["1.32.0"],
+    "catch_2110": ["1.32.0"],
     "catch_main": ["1.32.0"],
     "mluops": ["v1.11.0-1"]
   },
