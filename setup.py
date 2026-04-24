@@ -377,35 +377,55 @@ def get_extensions():
                         import tempfile
                         import shutil
                         
-                        deb_url = os.environ.get('MLUOPS_URL')
-                        if not deb_url:
+                        package_url = os.environ.get('MLUOPS_URL')
+                        if not package_url:
                             raise ImportError('MLUOPS_URL environment variable is not set, please set this url or upgrade mluops manually')
 
                         neuware_home = os.environ.get('NEUWARE_HOME')
                         if not neuware_home:
                             raise ImportError('NEUWARE_HOME environment variable is not set')
-                        
+
                         target_lib_dir = os.path.join(neuware_home, 'lib64')
                         target_include_dir = os.path.join(neuware_home, 'include')
                         
                         print(f'Updating mluops from version {local_mluops_version} to {mmcv_mluops_version[1:]}')
+                        print(f'Downloading package from: {package_url}')
                         
                         with tempfile.TemporaryDirectory() as tmpdir:
-                            deb_file = os.path.join(tmpdir, 'mluops*.deb')
+                            package_filename = os.path.basename(package_url.split('?')[0])
+                            package_file = os.path.join(tmpdir, package_filename)
                             extract_dir = os.path.join(tmpdir, 'extracted')
-                            
-                            print(f'Downloading from {deb_url}')
-                            req = requests.get(deb_url, stream=True)
+
+                            print(f'Downloading from {package_url}')
+                            req = requests.get(package_url, stream=True)
                             req.raise_for_status()
-                            with open(deb_file, 'wb') as f:
+                            total_size = int(req.headers.get('content-length', 0))
+                            downloaded = 0
+                            with open(package_file, 'wb') as f:
                                 for chunk in req.iter_content(chunk_size=8192):
                                     if chunk:
                                         f.write(chunk)
+                                        downloaded += len(chunk)
+                                        if total_size > 0:
+                                            progress = (downloaded / total_size) * 100
+                                            print(f'\rDownload progress: {progress:.1f}%', end='')
+                            print(f'\nSuccessfully downloaded {package_filename}')
                             
-                            print('Extracting deb package...')
-                            os.makedirs(extract_dir)
-                            subprocess.run(['dpkg', '-x', deb_file, extract_dir], check=True)
-                    
+                            print('Extracting package...')
+                            os.makedirs(extract_dir, exist_ok=True)
+
+                            if package_filename.endswith('.deb'):
+                                subprocess.run(['dpkg', '-x', package_file, extract_dir], check=True, capture_output=True)
+                                print('Successfully extracted deb package')
+
+                            elif package_filename.endswith('.rpm'):
+                                subprocess.run(f'cd {extract_dir} && rpm2cpio {package_file} | cpio -div',
+                                             shell=True, check=True, capture_output=True)
+                                print('Successfully extracted rpm package')
+
+                            else:
+                                raise RuntimeError(f'Unsupported package format: {package_filename}. Only .deb and .rpm are supported.')
+
                             source_lib_dir = None
                             for root, dirs, files in os.walk(extract_dir):
                                 if any(f.startswith('libmluops') for f in files):
@@ -414,7 +434,7 @@ def get_extensions():
                                     break
 
                             if not source_lib_dir:
-                                raise RuntimeError('Could not find libmluops files in deb package')
+                                raise RuntimeError('Could not find libmluops files in package')
 
                             print(f'Removing existing mluops libraries from {target_lib_dir}...')
                             for item in os.listdir(target_lib_dir):
@@ -449,6 +469,7 @@ def get_extensions():
                                     else:
                                         print(f'  {item} (file)')
 
+                            print('\nUpdating header files...')
                             for root, dirs, files in os.walk(extract_dir):
                                 if 'include' in root:
                                     for file in files:
@@ -460,8 +481,10 @@ def get_extensions():
                                                 target_file = os.path.join(target_include_dir, include_part.lstrip(os.sep))
                                                 os.makedirs(os.path.dirname(target_file), exist_ok=True)
                                                 shutil.copy2(source_file, target_file)
-
+                                                print(f'  Copied header: {os.path.basename(target_file)}')
                             subprocess.run(['ldconfig'], check=False, capture_output=True)
+                            include_dirs.append(os.path.abspath(target_include_dir))
+                            print(f'\nSuccessfully updated mluops to required version {mmcv_mluops_version[1:]}')
 
             define_macros += [('MMCV_WITH_MLU', None)]
             torch_version = torch.__version__
