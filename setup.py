@@ -345,7 +345,7 @@ def get_extensions():
                         'or rename or remove it.')
             else:
                 if not os.path.exists('mlu-ops'):
-                    if parse_version(local_mluops_version) >= parse_version(mmcv_mluops_version[1:]):
+                    if parse_version(local_mluops_version) >= parse_version(mmcv_mluops_version[1:-2]):
                         include_dirs.append(os.path.abspath(os.environ.get('NEUWARE_HOME') + '/include/'))
                     else:
                         import requests
