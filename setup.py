@@ -307,8 +307,13 @@ def get_extensions():
         # More details at https://github.com/pytorch/pytorch/pull/45956
         extra_compile_args = {'cxx': []}
 
+        # PyTorch >= 2.13.0 requires C++20: cpp_extension defaults to -std=c++20
+        # from v2.13.0, and v2.14.0 headers enforce it with an #error guard.
         if platform.system() != 'Windows':
-            extra_compile_args['cxx'] = ['-std=c++17']
+            if parse_version(torch.__version__) >= parse_version('2.13.0'):
+                extra_compile_args['cxx'] = ['-std=c++20']
+            else:
+                extra_compile_args['cxx'] = ['-std=c++17']
 
         include_dirs = []
 
@@ -559,7 +564,10 @@ def get_extensions():
         # to compile those cpp files, so there is no need to add the
         # argument
         if 'nvcc' in extra_compile_args and platform.system() != 'Windows':
-            extra_compile_args['nvcc'] += ['-std=c++14']
+            if parse_version(torch.__version__) >= parse_version('2.13.0'):
+                extra_compile_args['nvcc'] += ['-std=c++20']
+            else:
+                extra_compile_args['nvcc'] += ['-std=c++14']
 
         ext_ops = extension(
             name=ext_name,
