@@ -192,6 +192,9 @@ void deform_conv_forward(Tensor input, Tensor weight, Tensor offset,
 #else
   } else if (input.device().is_mlu()) {
 #endif
+    deform_conv_shape_check(input, offset, NULL, weight, kH, kW, dH, dW,
+                            padH, padW, dilationH, dilationW, group,
+                            deformable_group);
     deform_conv_forward_impl(input, weight, offset, output, columns, ones, kW,
 		             kH, dW, dH, padW, padH, dilationW, dilationH, group,
 			     deformable_group, im2col_step);
@@ -323,6 +326,9 @@ void deform_conv_backward_input(Tensor input, Tensor offset, Tensor gradOutput,
 #else
   } else if (input.device().is_mlu()) {
 #endif
+    deform_conv_shape_check(input, offset, &gradOutput, weight, kH, kW, dH,
+                            dW, padH, padW, dilationH, dilationW, group,
+                            deformable_group);
     deform_conv_backward_input_impl(input, offset, gradOutput, gradInput,
 		                    gradOffset, weight, columns, kW, kH,
 				    dW, dH, padW, padH, dilationW,
@@ -466,6 +472,9 @@ void deform_conv_backward_parameters(Tensor input, Tensor offset,
 #else
   } else if (input.device().is_mlu()) {
 #endif
+    deform_conv_shape_check(input, offset, &gradOutput, gradWeight, kH, kW, dH,
+                            dW, padH, padW, dilationH, dilationW, group,
+                            deformable_group);
     deform_conv_backward_parameters_impl(input, offset, gradOutput,
 		                         gradWeight, columns, ones, kW, kH,
 				         dW, dH, padW, padH, dilationW,

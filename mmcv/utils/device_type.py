@@ -5,7 +5,9 @@ from mmengine.device import (is_cuda_available, is_mlu_available,
 def replacement_is_mlu_available():
     try:
         import torch_mlu
-        IS_MLU_AVAILABLE = True
+        import torch
+        IS_MLU_AVAILABLE = (hasattr(torch, 'mlu') and
+                            torch.mlu.is_available())
     except Exception:
         IS_MLU_AVAILABLE = False
     return IS_MLU_AVAILABLE
