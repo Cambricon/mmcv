@@ -3,6 +3,7 @@ import os
 import platform
 import re
 import warnings
+from pathlib import Path
 from pkg_resources import DistributionNotFound, get_distribution, parse_version
 from setuptools import find_packages, setup
 
@@ -351,145 +352,127 @@ def get_extensions():
 
             mmcv_mluops_version, _ = get_mlu_version()
             local_mluops_version = get_local_mluops_version()
-            mlu_ops_path = os.getenv('MMCV_MLU_OPS_PATH')
-            if mlu_ops_path:
-                exists_mluops_version, _ = get_mlu_version()
-                if exists_mluops_version != mmcv_mluops_version:
-                    print('the version of mlu-ops provided is %s,'
-                          ' while %s is needed.' %
-                          (exists_mluops_version, mmcv_mluops_version))
-                    exit()
-                try:
-                    if os.path.exists('mlu-ops'):
-                        if os.path.islink('mlu-ops'):
-                            os.remove('mlu-ops')
-                            os.symlink(mlu_ops_path, 'mlu-ops')
-                        elif os.path.abspath('mlu-ops') != mlu_ops_path:
-                            os.symlink(mlu_ops_path, 'mlu-ops')
-                    else:
-                        os.symlink(mlu_ops_path, 'mlu-ops')
-                except Exception:
-                    raise FileExistsError(
-                        'mlu-ops already exists, please move it out,'
-                        'or rename or remove it.')
+            if parse_version(local_mluops_version) >= parse_version(mmcv_mluops_version[1:-2]):
+                include_dirs.append(os.path.abspath(os.environ.get('NEUWARE_HOME') + '/include/'))
             else:
-                if not os.path.exists('mlu-ops'):
-                    if parse_version(local_mluops_version) >= parse_version(mmcv_mluops_version[1:-2]):
-                        include_dirs.append(os.path.abspath(os.environ.get('NEUWARE_HOME') + '/include/'))
+                if os.getenv('MMCV_MLUOPS_AUTO_UPGRADE', '0') != '1':
+                    raise RuntimeError(
+                        'The installed mlu-ops version '
+                        f'{local_mluops_version or "is unavailable"} does not '
+                        f'satisfy the required version '
+                        f'{mmcv_mluops_version[1:]}. Please upgrade Neuware '
+                        'before building MMCV.')
+                import requests
+                import subprocess
+                import tempfile
+                import shutil
+
+                package_url = os.environ.get('MLUOPS_URL')
+                if not package_url:
+                    raise ImportError('MLUOPS_URL environment variable is not set, please set this url or upgrade mluops manually')
+
+                neuware_home = os.environ.get('NEUWARE_HOME')
+                if not neuware_home:
+                    raise ImportError('NEUWARE_HOME environment variable is not set')
+
+                cache_root = Path(os.getenv(
+                    'MMCV_MLUOPS_CACHE',
+                    str(Path(__file__).resolve().parent / '.mlu-ops-cache')))
+                private_root = cache_root / mmcv_mluops_version
+                target_lib_dir = private_root / 'lib'
+                target_include_dir = private_root / 'include'
+                target_lib_dir.mkdir(parents=True, exist_ok=True)
+                target_include_dir.mkdir(parents=True, exist_ok=True)
+
+                print(f'Updating mluops from version {local_mluops_version} to {mmcv_mluops_version[1:]}')
+                print(f'Downloading package from: {package_url}')
+
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    package_filename = os.path.basename(package_url.split('?')[0])
+                    package_file = os.path.join(tmpdir, package_filename)
+                    extract_dir = os.path.join(tmpdir, 'extracted')
+
+                    print(f'Downloading from {package_url}')
+                    req = requests.get(package_url, stream=True)
+                    req.raise_for_status()
+                    total_size = int(req.headers.get('content-length', 0))
+                    downloaded = 0
+                    with open(package_file, 'wb') as f:
+                        for chunk in req.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                if total_size > 0:
+                                    progress = (downloaded / total_size) * 100
+                                    print(f'\rDownload progress: {progress:.1f}%', end='')
+                    print(f'\nSuccessfully downloaded {package_filename}')
+
+                    print('Extracting package...')
+                    os.makedirs(extract_dir, exist_ok=True)
+
+                    if package_filename.endswith('.deb'):
+                        subprocess.run(['dpkg', '-x', package_file, extract_dir], check=True, capture_output=True)
+                        print('Successfully extracted deb package')
+
+                    elif package_filename.endswith('.rpm'):
+                        subprocess.run(f'cd {extract_dir} && rpm2cpio {package_file} | cpio -div',
+                                     shell=True, check=True, capture_output=True)
+                        print('Successfully extracted rpm package')
+
                     else:
-                        import requests
-                        import subprocess
-                        import tempfile
-                        import shutil
-                        
-                        package_url = os.environ.get('MLUOPS_URL')
-                        if not package_url:
-                            raise ImportError('MLUOPS_URL environment variable is not set, please set this url or upgrade mluops manually')
+                        raise RuntimeError(f'Unsupported package format: {package_filename}. Only .deb and .rpm are supported.')
 
-                        neuware_home = os.environ.get('NEUWARE_HOME')
-                        if not neuware_home:
-                            raise ImportError('NEUWARE_HOME environment variable is not set')
+                    source_lib_dir = None
+                    for root, dirs, files in os.walk(extract_dir):
+                        if any(f.startswith('libmluops') for f in files):
+                            source_lib_dir = root
+                            print(f'Found library directory: {source_lib_dir}')
+                            break
 
-                        target_lib_dir = os.path.join(neuware_home, 'lib64')
-                        target_include_dir = os.path.join(neuware_home, 'include')
-                        
-                        print(f'Updating mluops from version {local_mluops_version} to {mmcv_mluops_version[1:]}')
-                        print(f'Downloading package from: {package_url}')
-                        
-                        with tempfile.TemporaryDirectory() as tmpdir:
-                            package_filename = os.path.basename(package_url.split('?')[0])
-                            package_file = os.path.join(tmpdir, package_filename)
-                            extract_dir = os.path.join(tmpdir, 'extracted')
+                    if not source_lib_dir:
+                        raise RuntimeError('Could not find libmluops files in package')
 
-                            print(f'Downloading from {package_url}')
-                            req = requests.get(package_url, stream=True)
-                            req.raise_for_status()
-                            total_size = int(req.headers.get('content-length', 0))
-                            downloaded = 0
-                            with open(package_file, 'wb') as f:
-                                for chunk in req.iter_content(chunk_size=8192):
-                                    if chunk:
-                                        f.write(chunk)
-                                        downloaded += len(chunk)
-                                        if total_size > 0:
-                                            progress = (downloaded / total_size) * 100
-                                            print(f'\rDownload progress: {progress:.1f}%', end='')
-                            print(f'\nSuccessfully downloaded {package_filename}')
-                            
-                            print('Extracting package...')
-                            os.makedirs(extract_dir, exist_ok=True)
+                    print(f'Copying new mluops libraries to {target_lib_dir}...')
+                    for item in os.listdir(source_lib_dir):
+                        if item.startswith('libmluops'):
+                            source_path = os.path.join(source_lib_dir, item)
+                            target_path = target_lib_dir / item
 
-                            if package_filename.endswith('.deb'):
-                                subprocess.run(['dpkg', '-x', package_file, extract_dir], check=True, capture_output=True)
-                                print('Successfully extracted deb package')
-
-                            elif package_filename.endswith('.rpm'):
-                                subprocess.run(f'cd {extract_dir} && rpm2cpio {package_file} | cpio -div',
-                                             shell=True, check=True, capture_output=True)
-                                print('Successfully extracted rpm package')
-
+                            if os.path.islink(source_path):
+                                link_target = os.readlink(source_path)
+                                os.symlink(link_target, target_path)
+                                print(f'Created symlink: {item} -> {link_target}')
                             else:
-                                raise RuntimeError(f'Unsupported package format: {package_filename}. Only .deb and .rpm are supported.')
+                                shutil.copy2(source_path, target_path)
+                                os.chmod(target_path, 0o755)
+                                print(f'Copied: {item}')
 
-                            source_lib_dir = None
-                            for root, dirs, files in os.walk(extract_dir):
-                                if any(f.startswith('libmluops') for f in files):
-                                    source_lib_dir = root
-                                    print(f'Found library directory: {source_lib_dir}')
-                                    break
+                    print('\nVerifying symlink structure:')
+                    for item in sorted(os.listdir(target_lib_dir)):
+                        if item.startswith('libmluops'):
+                            item_path = os.path.join(target_lib_dir, item)
+                            if os.path.islink(item_path):
+                                link_target = os.readlink(item_path)
+                                print(f'  {item} -> {link_target}')
+                            else:
+                                print(f'  {item} (file)')
 
-                            if not source_lib_dir:
-                                raise RuntimeError('Could not find libmluops files in package')
-
-                            print(f'Removing existing mluops libraries from {target_lib_dir}...')
-                            for item in os.listdir(target_lib_dir):
-                                if item.startswith('libmluops'):
-                                    item_path = os.path.join(target_lib_dir, item)
-                                    if os.path.isfile(item_path) or os.path.islink(item_path):
-                                        os.remove(item_path)
-                                        print(f'Removed: {item_path}')
-
-                            print(f'Copying new mluops libraries to {target_lib_dir}...')
-                            for item in os.listdir(source_lib_dir):
-                                if item.startswith('libmluops'):
-                                    source_path = os.path.join(source_lib_dir, item)
-                                    target_path = os.path.join(target_lib_dir, item)
-
-                                    if os.path.islink(source_path):
-                                        link_target = os.readlink(source_path)
-                                        os.symlink(link_target, target_path)
-                                        print(f'Created symlink: {item} -> {link_target}')
-                                    else:
-                                        shutil.copy2(source_path, target_path)
-                                        os.chmod(target_path, 0o755)
-                                        print(f'Copied: {item}')
-
-                            print('\nVerifying symlink structure:')
-                            for item in sorted(os.listdir(target_lib_dir)):
-                                if item.startswith('libmluops'):
-                                    item_path = os.path.join(target_lib_dir, item)
-                                    if os.path.islink(item_path):
-                                        link_target = os.readlink(item_path)
-                                        print(f'  {item} -> {link_target}')
-                                    else:
-                                        print(f'  {item} (file)')
-
-                            print('\nUpdating header files...')
-                            for root, dirs, files in os.walk(extract_dir):
-                                if 'include' in root:
-                                    for file in files:
-                                        if file.endswith('.h'):
-                                            source_file = os.path.join(root, file)
-                                            rel_path = os.path.relpath(source_file, extract_dir)
-                                            if 'include' in rel_path:
-                                                include_part = rel_path.split('include', 1)[1]
-                                                target_file = os.path.join(target_include_dir, include_part.lstrip(os.sep))
-                                                os.makedirs(os.path.dirname(target_file), exist_ok=True)
-                                                shutil.copy2(source_file, target_file)
-                                                print(f'  Copied header: {os.path.basename(target_file)}')
-                            subprocess.run(['ldconfig'], check=False, capture_output=True)
-                            include_dirs.append(os.path.abspath(target_include_dir))
-                            print(f'\nSuccessfully updated mluops to required version {mmcv_mluops_version[1:]}')
+                    print('\nUpdating header files...')
+                    for root, dirs, files in os.walk(extract_dir):
+                        if 'include' in root:
+                            for file in files:
+                                if file.endswith('.h'):
+                                    source_file = os.path.join(root, file)
+                                    rel_path = os.path.relpath(source_file, extract_dir)
+                                    if 'include' in rel_path:
+                                        include_part = rel_path.split('include', 1)[1]
+                                        target_file = target_include_dir / include_part.lstrip(os.sep)
+                                        target_file.parent.mkdir(parents=True, exist_ok=True)
+                                        shutil.copy2(source_file, target_file)
+                                        print(f'  Copied header: {os.path.basename(target_file)}')
+                    include_dirs.append(str(target_include_dir))
+                    library_dirs.append(str(target_lib_dir))
+                    print(f'\nSuccessfully updated mluops to required version {mmcv_mluops_version[1:]}')
 
             define_macros += [('MMCV_WITH_MLU', None)]
             torch_version = torch.__version__

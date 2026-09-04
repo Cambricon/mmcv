@@ -406,21 +406,17 @@ docker pull ${docker image}
 
 ##### 选项2：基于 cambricon pytorch 源码编译安装
 
-请向 service@cambricon.com 发送邮件或联系 Cambricon 工程师以获取合适版本的 CATCH 软件包，在您获得合适版本的 CATCH 软件包后，请参照 ${CATCH-path}/CONTRIBUTING.md 中的步骤安装 CATCH。
+请按照 Cambricon 文档安装兼容版本的 `torch_mlu`。
 
 #### 编译 MMCV
 
 克隆代码仓库
 
 ```bash
-git clone https://github.com/open-mmlab/mmcv.git
+git clone https://github.com/Cambricon/mmcv.git
 ```
 
-算子库 mlu-ops 在编译 MMCV 时自动下载到默认路径(mmcv/mlu-ops)，你也可以在编译前设置环境变量 MMCV_MLU_OPS_PATH 指向已经存在的 mlu-ops 算子库路径。
-
-```bash
-export MMCV_MLU_OPS_PATH=/xxx/xxx/mlu-ops
-```
+编译 MMCV 前请先在 Neuware 中安装满足要求的 `mlu-ops`。
 
 开始编译
 
