@@ -14,7 +14,7 @@ from torch.testing._internal.common_utils import \
     (TestCase, run_tests)
 
 class TestModulatedDcnMlu(TestCase):
-    def test_modulated_deform_conv(self):
+    def test_modulated_deform_conv_large_channels(self):
         input_tensor = torch.randn(1, 3, 224, 224)
         dcn = ModulatedDeformConv2dPack(
             in_channels=3,
