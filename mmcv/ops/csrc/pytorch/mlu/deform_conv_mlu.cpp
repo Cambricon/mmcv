@@ -73,6 +73,10 @@ void deform_conv_forward_mlu(Tensor input, Tensor weight, Tensor offset,
       input_ptr, offset_desc.desc(), offset_ptr, NULL, NULL,
       weight_desc.desc(), weight_ptr, NULL, NULL, workspace_ptr,
       workspace_size, output_desc.desc(), output_ptr));
+
+  if (is_copy_necessary(output, output_contiguous)) {
+    output.copy_(output_contiguous);
+  }
 }
 
 void deform_conv_backward_input_mlu(Tensor input, Tensor offset, Tensor gradOutput,
@@ -167,6 +171,13 @@ void deform_conv_backward_input_mlu(Tensor input, Tensor offset, Tensor gradOutp
                         /* grad_offset_ptr  */ grad_offset_ptr,
                         /* grad_mask_desc   */ NULL,
                         /* grad_maks_ptr    */ NULL));
+
+  if (is_copy_necessary(gradInput, grad_input_contiguous)) {
+    gradInput.copy_(grad_input_contiguous);
+  }
+  if (is_copy_necessary(gradOffset, grad_offset_contiguous)) {
+    gradOffset.copy_(grad_offset_contiguous);
+  }
 }
 
 void deform_conv_backward_parameters_mlu(Tensor input, Tensor offset, Tensor gradOutput,
@@ -244,6 +255,10 @@ void deform_conv_backward_parameters_mlu(Tensor input, Tensor offset, Tensor gra
                         /* grad_weigth_ptr   */ grad_weight_ptr,
                         /* grad_bias_desc    */ NULL,
                         /* grad_bias_ptr     */ NULL));
+
+  if (is_copy_necessary(gradWeight, grad_weight_contiguous)) {
+    gradWeight.copy_(grad_weight_contiguous);
+  }
 }
 
 void deform_conv_forward_impl(Tensor input, Tensor weight, Tensor offset,
